@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="flex items-center justify-center min-h-[80vh]">
+    <div class="bg-white p-8 rounded-xl shadow-lg border border-slate-200 w-full max-w-md">
+        
+        <div class="text-center mb-8">
+            <div class="w-14 h-14 bg-slate-900 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <span class="font-serif text-white text-2xl font-bold">U</span>
+            </div>
+            <h1 class="font-serif text-2xl text-slate-800">UniManage</h1>
+            <p class="text-xs text-slate-500 font-bold uppercase tracking-widest mt-1">University Management System</p>
+        </div>
+
+        <form method="POST" action="{{ url_for('auth.login') }}" class="space-y-5">
+            <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Username</label>
+                <input type="text" name="username" required autofocus
+                       class="w-full border-2 border-slate-200 rounded-lg px-4 py-2 focus:outline-none focus:border-slate-900 transition-colors">
+            </div>
+            
+            <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Password</label>
+                <input type="password" name="password" required
+                       class="w-full border-2 border-slate-200 rounded-lg px-4 py-2 focus:outline-none focus:border-slate-900 transition-colors">
+            </div>
+            
+            <button type="submit" class="w-full bg-slate-900 text-white font-bold py-3 rounded-lg hover:bg-slate-800 transition-colors">
+                Sign In
+            </button>
+        </form>
+
+        <p class="text-center text-sm text-slate-500 mt-6">
+            Don't have an account? <a href="{{ url_for('auth.signup') }}" class="text-amber-600 font-bold hover:underline">Sign up</a>
+        </p>
+    </div>
+</div>
+{% endblock %}
