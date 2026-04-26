@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="text-3xl font-bold mb-6">Academic Staff Directory</h1>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% for s in staff %}
+    <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200 flex flex-col">
+        <h3 class="font-bold text-lg">{{ s.name }}</h3>
+        <span class="text-xs bg-slate-200 text-slate-700 inline-block px-2 py-1 rounded mt-1 w-fit uppercase font-bold">{{ s.role_type }}</span>
+        <div class="mt-4 text-sm text-slate-600 space-y-1">
+            <p><strong>Dept:</strong> {{ s.department }}</p>
+            <p><strong>Email:</strong> {{ s.email }}</p>
+            <p><strong>Office:</strong> {{ s.office_hours }}</p>
+        </div>
+    </div>
+    {% else %}
+    <p class="text-slate-500">No staff members found.</p>
+    {% endfor %}
+</div>
+{% endblock %}

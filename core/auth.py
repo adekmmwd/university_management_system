@@ -19,9 +19,8 @@ def login_required(f):
 
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
-    # If already logged in, send them to the temporary dashboard
     if "user_id" in session:
-        return redirect(url_for("dashboard"))
+        return redirect(url_for("staff.profile"))
 
     if request.method == "POST":
         username = request.form.get("username", "").strip()
@@ -35,7 +34,6 @@ def login():
             response.data[0]["password_hash"], pwd
         ):
             user = response.data[0]
-            # Create the secure session cookie
             session.update(
                 {
                     "user_id": user["id"],
@@ -44,7 +42,8 @@ def login():
                 }
             )
             flash(f"Welcome back, {user['full_name']}!", "success")
-            return redirect(url_for("dashboard"))
+
+            return redirect(url_for("staff.profile"))
 
         flash("Invalid username or password.", "danger")
 
@@ -66,14 +65,46 @@ def signup():
             flash("Username already exists.", "danger")
         else:
             hashed = generate_password_hash(pwd)
-            supabase.table("users").insert(
-                {
-                    "username": username,
-                    "password_hash": hashed,
-                    "full_name": full_name,
-                    "role": role,
-                }
-            ).execute()
+
+            # 1. Create the Auth User
+            user_resp = (
+                supabase.table("users")
+                .insert(
+                    {
+                        "username": username,
+                        "password_hash": hashed,
+                        "full_name": full_name,
+                        "role": role,
+                    }
+                )
+                .execute()
+            )
+
+            new_user_id = user_resp.data[0]["id"]
+
+            # 2. Automatically generate the public directory profile
+            if role == "staff" or role == "admin":
+                supabase.table("staff").insert(
+                    {
+                        "user_id": new_user_id,
+                        "staff_id": f"STAFF-{new_user_id}",  # Generate a placeholder ID
+                        "name": full_name,
+                        "role_type": "professor",
+                        "department": "Pending Assignment",
+                        "email": f"{username}@university.edu",
+                    }
+                ).execute()
+            elif role == "student":
+                supabase.table("students").insert(
+                    {
+                        "user_id": new_user_id,
+                        "student_id": f"STU-{new_user_id}",
+                        "name": full_name,
+                        "email": f"{username}@university.edu",
+                        "department": "Undeclared",
+                    }
+                ).execute()
+
             flash("Account created! Please log in.", "success")
             return redirect(url_for("auth.login"))
 

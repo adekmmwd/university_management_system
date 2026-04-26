@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="text-3xl font-bold mb-6">{% if student %}Edit{% else %}Add{% endif %} Student</h1>
+
+<div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200 max-w-lg">
+    <form method="POST" class="space-y-4">
+        {% if not student %}
+        <div>
+            <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Student ID *</label>
+            <input type="text" name="student_id" required class="w-full border-2 border-slate-200 rounded-lg px-4 py-2 focus:outline-none focus:border-slate-900">
+        </div>
+        {% endif %}
+        <div>
+            <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Full Name *</label>
+            <input type="text" name="name" value="{{ student.name if student else '' }}" required class="w-full border-2 border-slate-200 rounded-lg px-4 py-2 focus:outline-none focus:border-slate-900">
+        </div>
+        <div>
+            <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Email *</label>
+            <input type="email" name="email" value="{{ student.email if student else '' }}" required class="w-full border-2 border-slate-200 rounded-lg px-4 py-2 focus:outline-none focus:border-slate-900">
+        </div>
+        <div>
+            <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Department</label>
+            <input type="text" name="department" value="{{ student.department if student else '' }}" class="w-full border-2 border-slate-200 rounded-lg px-4 py-2 focus:outline-none focus:border-slate-900">
+        </div>
+        <div>
+            <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Year</label>
+            <input type="text" name="year" value="{{ student.year if student else '' }}" class="w-full border-2 border-slate-200 rounded-lg px-4 py-2 focus:outline-none focus:border-slate-900">
+        </div>
+        
+        <div class="flex gap-4 pt-4">
+            <button type="submit" class="bg-slate-900 text-white font-bold py-2 px-6 rounded hover:bg-slate-800">Save</button>
+            <a href="{{ url_for('community.students_list') }}" class="py-2 px-6 border-2 border-slate-200 text-slate-600 font-bold rounded hover:bg-slate-50">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

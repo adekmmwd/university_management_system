@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <h1 class="text-3xl font-bold">Student Records</h1>
+    <a href="{{ url_for('community.student_new') }}" class="bg-amber-500 text-white px-4 py-2 rounded font-bold hover:bg-amber-600">Add Student</a>
+</div>
+<div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+    <table class="w-full text-left">
+        <thead class="bg-slate-900 text-white">
+            <tr>
+                <th class="p-4">ID</th>
+                <th class="p-4">Name</th>
+                <th class="p-4">Department</th>
+                <th class="p-4">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for s in students %}
+            <tr class="border-b">
+                <td class="p-4 font-mono">{{ s.student_id }}</td>
+                <td class="p-4 font-bold">{{ s.name }}</td>
+                <td class="p-4">{{ s.department }} (Year {{ s.year }})</td>
+                <td class="p-4">
+                    <a href="{{ url_for('community.student_edit', sid=s.id) }}" class="text-blue-600 font-bold hover:underline">Edit</a>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="4" class="p-4 text-slate-500 text-center">No students found.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
