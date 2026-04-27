@@ -17,6 +17,20 @@ def login_required(f):
     return wrapped
 
 
+def admin_required(f):
+    @wraps(f)
+    def wrapped(*args, **kwargs):
+        if "user_id" not in session:
+            flash("Please log in first.", "warning")
+            return redirect(url_for("auth.login"))
+        if session.get("role") != "admin":
+            flash("Access denied. Admin privileges required.", "danger")
+            return redirect(url_for("staff.profile"))
+        return f(*args, **kwargs)
+
+    return wrapped
+
+
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
     if "user_id" in session:

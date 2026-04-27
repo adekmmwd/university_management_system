@@ -28,4 +28,10 @@ CREATE TABLE staff (
   email TEXT,
   department TEXT,
   office_hours TEXT
-)
+);
+
+-- Indexes for performance optimization
+CREATE INDEX idx_students_student_id ON students(student_id);
+CREATE INDEX idx_students_name ON students(name);
+CREATE INDEX idx_students_department ON students(department);
+CREATE INDEX idx_students_year ON students(year);
