@@ -1,0 +1,31 @@
+-- Users Table (Auth)
+CREATE TABLE users (
+  id SERIAL PRIMARY KEY,
+  username TEXT UNIQUE NOT NULL,
+  password_hash TEXT NOT NULL,
+  role TEXT NOT NULL DEFAULT 'student',
+  full_name TEXT
+);
+
+-- Students Table (UMS-9)
+CREATE TABLE students (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  student_id TEXT UNIQUE NOT NULL,
+  name TEXT NOT NULL,
+  email TEXT NOT NULL,
+  department TEXT,
+  year TEXT
+);
+
+-- Staff Table (UMS-11)
+CREATE TABLE staff (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  staff_id TEXT UNIQUE NOT NULL,
+  name TEXT NOT NULL,
+  role_type TEXT NOT NULL DEFAULT 'professor',
+  email TEXT,
+  department TEXT,
+  office_hours TEXT
+)
