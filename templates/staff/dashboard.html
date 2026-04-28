@@ -1,29 +1,180 @@
 {% extends "base.html" %}
 {% block content %}
 <h1 class="text-3xl font-bold mb-6">Personal Dashboard</h1>
-<div class="bg-white p-6 rounded-lg shadow-sm max-w-2xl border border-slate-200">
-    <div class="flex items-center gap-4 border-b pb-4 mb-4">
-        <div class="w-16 h-16 bg-slate-900 text-white rounded-full flex items-center justify-center text-2xl font-bold">
-            {{ user.full_name[0] | upper }}
+
+<div class="grid grid-cols-1 gap-6">
+    <!-- User Profile Card -->
+    <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+        <div class="flex items-center gap-4 border-b pb-4 mb-4">
+            <div class="w-16 h-16 bg-slate-900 text-white rounded-full flex items-center justify-center text-2xl font-bold">
+                {{ user.full_name[0] | upper }}
+            </div>
+            <div>
+                <h2 class="text-xl font-bold">{{ user.full_name }}</h2>
+                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full uppercase font-bold">{{ role }}</span>
+            </div>
         </div>
-        <div>
-            <h2 class="text-xl font-bold">{{ user.full_name }}</h2>
-            <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full uppercase font-bold">{{ role }}</span>
-        </div>
-    </div>
-    <div class="space-y-3">
-        <p><strong class="text-slate-500 text-sm uppercase">Username:</strong> <br> {{ user.username }}</p>
-        {% if extra %}
-            {% if role == 'student' %}
-                <p><strong class="text-slate-500 text-sm uppercase">Student ID:</strong> <br> {{ extra.student_id }}</p>
-                <p><strong class="text-slate-500 text-sm uppercase">Major:</strong> <br> {{ extra.department }} (Year {{ extra.year }})</p>
+        <div class="space-y-3">
+            <p><strong class="text-slate-500 text-sm uppercase">Username:</strong> <br> {{ user.username }}</p>
+            {% if extra %}
+                {% if role == 'student' %}
+                    <p><strong class="text-slate-500 text-sm uppercase">Student ID:</strong> <br> {{ extra.student_id }}</p>
+                    <p><strong class="text-slate-500 text-sm uppercase">Major:</strong> <br> {{ extra.department }} (Year {{ extra.year }})</p>
+                {% else %}
+                    <p><strong class="text-slate-500 text-sm uppercase">Staff ID:</strong> <br> {{ extra.staff_id }}</p>
+                    <p><strong class="text-slate-500 text-sm uppercase">Department:</strong> <br> {{ extra.department }}</p>
+                    <p><strong class="text-slate-500 text-sm uppercase">Office Hours:</strong> <br> {{ extra.office_hours }}</p>
+                {% endif %}
             {% else %}
-                <p><strong class="text-slate-500 text-sm uppercase">Staff ID:</strong> <br> {{ extra.staff_id }}</p>
-                <p><strong class="text-slate-500 text-sm uppercase">Office Hours:</strong> <br> {{ extra.office_hours }}</p>
+                <p class="text-slate-400 italic">No extended profile data configured yet.</p>
             {% endif %}
-        {% else %}
-            <p class="text-slate-400 italic">No extended profile data configured yet.</p>
-        {% endif %}
+        </div>
     </div>
+
+    <!-- Assigned Courses Widget -->
+    {% if role in ['staff', 'professor', 'ta', 'admin'] and extra %}
+    <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+        <h3 class="text-xl font-bold mb-4 flex items-center gap-2">
+            <span class="text-blue-600">📚</span> Assigned Courses
+        </h3>
+        
+        <!-- Loading State -->
+        <div id="courses-loading" class="flex items-center gap-2 text-slate-500">
+            <span class="inline-block h-4 w-4 border-2 border-slate-300 border-t-blue-600 rounded-full animate-spin"></span>
+            Loading courses...
+        </div>
+
+        <!-- Courses Table (Hidden initially) -->
+        <div id="courses-content" class="hidden">
+            <div id="courses-empty" class="text-center py-8 text-slate-500">
+                <p class="text-lg">No courses assigned.</p>
+                <p class="text-sm">Contact your administrator if you believe this is incorrect.</p>
+            </div>
+            <div id="courses-list" class="hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead class="bg-slate-100 border-b border-slate-200">
+                            <tr>
+                                <th class="text-left px-4 py-3 font-bold text-slate-700">Course Code</th>
+                                <th class="text-left px-4 py-3 font-bold text-slate-700">Course Name</th>
+                                <th class="text-left px-4 py-3 font-bold text-slate-700">Department</th>
+                                <th class="text-left px-4 py-3 font-bold text-slate-700">Role</th>
+                            </tr>
+                        </thead>
+                        <tbody id="courses-tbody">
+                            <!-- Courses will be inserted here by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Error State -->
+        <div id="courses-error" class="hidden bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+            <p class="font-bold">Error loading courses</p>
+            <p class="text-sm" id="error-message"></p>
+        </div>
+    </div>
+    {% endif %}
 </div>
+
+<script>
+// Load courses for the staff member
+document.addEventListener('DOMContentLoaded', function() {
+    const staffId = {{ extra.id if extra else 'null' }};
+    if (!staffId) return;
+
+    loadCourses(staffId);
+});
+
+function loadCourses(staffId) {
+    const loadingEl = document.getElementById('courses-loading');
+    const contentEl = document.getElementById('courses-content');
+    const errorEl = document.getElementById('courses-error');
+    const emptyEl = document.getElementById('courses-empty');
+    const coursesList = document.getElementById('courses-list');
+    const coursesTbody = document.getElementById('courses-tbody');
+    const errorMessage = document.getElementById('error-message');
+
+    // Show loading state
+    loadingEl.classList.remove('hidden');
+    contentEl.classList.add('hidden');
+    errorEl.classList.add('hidden');
+
+    // Fetch courses from API
+    fetch(`/api/staff/${staffId}/courses`)
+        .then(response => {
+            if (!response.ok) {
+                if (response.status === 403) {
+                    throw new Error('You do not have permission to view these courses.');
+                } else if (response.status === 500) {
+                    throw new Error('Server error while retrieving courses.');
+                } else {
+                    throw new Error('Failed to load courses.');
+                }
+            }
+            return response.json();
+        })
+        .then(data => {
+            loadingEl.classList.add('hidden');
+            contentEl.classList.remove('hidden');
+
+            if (!data.courses || data.courses.length === 0) {
+                // Show empty state
+                emptyEl.classList.remove('hidden');
+                coursesList.classList.add('hidden');
+            } else {
+                // Show courses table
+                emptyEl.classList.add('hidden');
+                coursesList.classList.remove('hidden');
+                
+                // Populate courses
+                coursesTbody.innerHTML = '';
+                data.courses.forEach(course => {
+                    const row = document.createElement('tr');
+                    row.className = 'border-b border-slate-100 hover:bg-slate-50';
+                    row.innerHTML = `
+                        <td class="px-4 py-3 font-semibold text-slate-900">${escapeHtml(course.course_id)}</td>
+                        <td class="px-4 py-3 text-slate-800">${escapeHtml(course.course_name)}</td>
+                        <td class="px-4 py-3 text-slate-600">${escapeHtml(course.department || 'N/A')}</td>
+                        <td class="px-4 py-3">
+                            <span class="inline-block px-3 py-1 rounded-full text-xs font-bold ${
+                                course.role === 'Professor' 
+                                    ? 'bg-green-100 text-green-800' 
+                                    : 'bg-blue-100 text-blue-800'
+                            }">
+                                ${escapeHtml(course.role)}
+                            </span>
+                        </td>
+                    `;
+                    coursesTbody.appendChild(row);
+                });
+            }
+        })
+        .catch(error => {
+            loadingEl.classList.add('hidden');
+            contentEl.classList.add('hidden');
+            errorEl.classList.remove('hidden');
+            errorMessage.textContent = error.message;
+            console.error('Error loading courses:', error);
+        });
+}
+
+// Utility function to escape HTML and prevent XSS
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Optional: Add refresh functionality
+function refreshCourses() {
+    const staffId = {{ extra.id if extra else 'null' }};
+    if (staffId) {
+        loadCourses(staffId);
+    }
+}
+</script>
 {% endblock %}
+

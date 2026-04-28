@@ -30,8 +30,62 @@ CREATE TABLE staff (
   office_hours TEXT
 );
 
+-- Courses Table (UMS-Staff Courses Feature)
+CREATE TABLE courses (
+  id SERIAL PRIMARY KEY,
+  course_code TEXT UNIQUE NOT NULL,
+  course_name TEXT NOT NULL,
+  department TEXT,
+  credit_hours INTEGER,
+  semester TEXT,
+  description TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Staff Courses Mapping Table (Many-to-Many)
+CREATE TABLE staff_courses (
+  id SERIAL PRIMARY KEY,
+  staff_id INTEGER REFERENCES staff(id) ON DELETE CASCADE,
+  course_id INTEGER REFERENCES courses(id) ON DELETE CASCADE,
+  role TEXT NOT NULL DEFAULT 'Professor',
+  academic_year TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(staff_id, course_id)
+);
+
 -- Indexes for performance optimization
 CREATE INDEX idx_students_student_id ON students(student_id);
 CREATE INDEX idx_students_name ON students(name);
 CREATE INDEX idx_students_department ON students(department);
 CREATE INDEX idx_students_year ON students(year);
+
+-- Indexes for courses and staff_courses
+CREATE INDEX idx_courses_course_code ON courses(course_code);
+CREATE INDEX idx_courses_department ON courses(department);
+CREATE INDEX idx_staff_courses_staff_id ON staff_courses(staff_id);
+CREATE INDEX idx_staff_courses_course_id ON staff_courses(course_id);
+CREATE INDEX idx_staff_courses_role ON staff_courses(role);
+
+-- ============================================================
+-- SAMPLE DATA FOR TESTING (Staff Courses Feature)
+-- ============================================================
+
+-- Sample Courses
+INSERT INTO courses (course_code, course_name, department, credit_hours, semester, description)
+VALUES
+  ('CSE354', 'Distributed Systems', 'Computer Science', 3, 'Spring 2026', 'Advanced topics in distributed computing and systems design'),
+  ('CSE301', 'Database Management', 'Computer Science', 3, 'Spring 2026', 'Relational databases and SQL optimization'),
+  ('CSE251', 'Web Development', 'Computer Science', 3, 'Spring 2026', 'Modern web development with frameworks and tools'),
+  ('CSE401', 'Machine Learning', 'Computer Science', 3, 'Spring 2026', 'Introduction to ML algorithms and neural networks'),
+  ('ENG201', 'Technical Writing', 'Engineering', 2, 'Spring 2026', 'Professional technical communication'),
+  ('ENG302', 'Software Engineering', 'Engineering', 3, 'Spring 2026', 'Software design patterns and development methodologies');
+
+-- Sample Staff Courses Assignment (assuming staff with id=1, 2)
+-- Note: Replace staff_id and course_id with actual IDs from your database
+INSERT INTO staff_courses (staff_id, course_id, role, academic_year)
+VALUES
+  (1, 1, 'Professor', '2025-2026'),
+  (1, 3, 'Professor', '2025-2026'),
+  (1, 5, 'TA', '2025-2026'),
+  (2, 2, 'Professor', '2025-2026'),
+  (2, 4, 'Professor', '2025-2026');

@@ -1,6 +1,7 @@
-from flask import Blueprint, render_template, session
+from flask import Blueprint, render_template, session, jsonify
 from core.database import supabase
 from core.auth import login_required
+from epic3_staff.services import get_staff_courses, get_staff_by_user_id
 
 staff_bp = Blueprint("staff", __name__)
 
@@ -34,3 +35,35 @@ def profile():
 def directory():
     staff_members = supabase.table("staff").select("*").order("name").execute().data
     return render_template("staff/directory.html", staff=staff_members)
+
+
+# API: Get assigned courses for staff member (Staff Courses Feature)
+@staff_bp.route("/api/staff/<int:staff_id>/courses", methods=["GET"])
+@login_required
+def get_courses_api(staff_id):
+    """
+    Get all courses assigned to a staff member.
+    Authorization: Only authenticated users can access, and staff can only access their own courses.
+    
+    Args:
+        staff_id: The staff ID from the URL
+    
+    Returns:
+        JSON with list of courses or error message
+    """
+    uid = session.get("user_id")
+    
+    # Verify that the staff_id belongs to the current user
+    staff_member = get_staff_by_user_id(uid)
+    
+    if not staff_member or staff_member["id"] != staff_id:
+        return jsonify({"error": "Unauthorized"}), 403
+    
+    # Retrieve the courses
+    courses = get_staff_courses(staff_id)
+    
+    return jsonify({
+        "success": True,
+        "courses": courses,
+        "count": len(courses)
+    }), 200
