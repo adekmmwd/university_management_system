@@ -31,6 +31,23 @@ def admin_required(f):
     return wrapped
 
 
+def course_coordinator_required(f):
+    @wraps(f)
+    def wrapped(*args, **kwargs):
+        if "user_id" not in session:
+            flash("Please log in first.", "warning")
+            return redirect(url_for("auth.login"))
+        if session.get("role") != "course_coordinator":
+            flash(
+                "Access denied. Course Coordinator privileges required.",
+                "danger",
+            )
+            return redirect(url_for("staff.profile"))
+        return f(*args, **kwargs)
+
+    return wrapped
+
+
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
     if "user_id" in session:
@@ -97,13 +114,13 @@ def signup():
             new_user_id = user_resp.data[0]["id"]
 
             # 2. Automatically generate the public directory profile
-            if role == "staff" or role == "admin":
+            if role in ["staff", "admin", "course_coordinator"]:
                 supabase.table("staff").insert(
                     {
                         "user_id": new_user_id,
                         "staff_id": f"STAFF-{new_user_id}",  # Generate a placeholder ID
                         "name": full_name,
-                        "role_type": "professor",
+                        "role_type": "course_coordinator" if role == "course_coordinator" else "professor",
                         "department": "Pending Assignment",
                         "email": f"{username}@university.edu",
                     }

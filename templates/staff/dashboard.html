@@ -2,7 +2,20 @@
 {% block content %}
 <h1 class="text-3xl font-bold mb-6">Personal Dashboard</h1>
 
-<div class="grid grid-cols-1 gap-6">
+{% set is_coordinator = (role == 'course_coordinator') %}
+
+{% if is_coordinator %}
+<div class="mb-6 flex items-center gap-2">
+    <button id="tab-overview" type="button" class="px-4 py-2 rounded-lg font-bold text-sm bg-slate-900 text-white">
+        Overview
+    </button>
+    <button id="tab-add-course" type="button" class="px-4 py-2 rounded-lg font-bold text-sm bg-white text-slate-700 border border-slate-200 hover:bg-slate-50">
+        Add Course
+    </button>
+</div>
+{% endif %}
+
+<div id="panel-overview" class="grid grid-cols-1 gap-6">
     <!-- User Profile Card -->
     <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
         <div class="flex items-center gap-4 border-b pb-4 mb-4">
@@ -78,11 +91,160 @@
     {% endif %}
 </div>
 
+{% if is_coordinator %}
+<div id="panel-add-course" class="hidden">
+    <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200 max-w-2xl">
+        <h3 class="text-xl font-bold mb-4">Add New Course</h3>
+        <form method="POST" action="{{ url_for('staff.create_course') }}" class="space-y-4" id="add-course-form">
+            <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Course Code *</label>
+                <input type="text" name="course_code" id="course_code" required
+                    class="w-full border-2 border-slate-200 rounded-lg px-4 py-2 focus:outline-none focus:border-slate-900"
+                    placeholder="CSE342">
+                <p id="course_code_error" class="hidden text-sm font-bold text-red-600 mt-2">Course code is required.</p>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Course Title *</label>
+                <input type="text" name="title" id="title" required
+                    class="w-full border-2 border-slate-200 rounded-lg px-4 py-2 focus:outline-none focus:border-slate-900"
+                    placeholder="Agile Software Development">
+                <p id="title_error" class="hidden text-sm font-bold text-red-600 mt-2">Course title is required.</p>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Course Description</label>
+                <textarea name="description" id="description" rows="4"
+                    class="w-full border-2 border-slate-200 rounded-lg px-4 py-2 focus:outline-none focus:border-slate-900"
+                    placeholder="Optional description..."></textarea>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Course Type *</label>
+                    <select name="course_type" id="course_type" required
+                        class="w-full border-2 border-slate-200 rounded-lg px-4 py-2 focus:outline-none focus:border-slate-900 bg-white">
+                        <option value="">Select type...</option>
+                        <option value="Core">Core</option>
+                        <option value="Elective">Elective</option>
+                    </select>
+                    <p id="course_type_error" class="hidden text-sm font-bold text-red-600 mt-2">Course type is required.</p>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Capacity *</label>
+                    <input type="number" name="capacity" id="capacity" min="1" value="50" required
+                        class="w-full border-2 border-slate-200 rounded-lg px-4 py-2 focus:outline-none focus:border-slate-900">
+                    <p id="capacity_error" class="hidden text-sm font-bold text-red-600 mt-2">Capacity must be a positive number.</p>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Department *</label>
+                <select name="department" id="department" required
+                    class="w-full border-2 border-slate-200 rounded-lg px-4 py-2 focus:outline-none focus:border-slate-900 bg-white">
+                    <option value="">Select department...</option>
+                    {% for dep in departments %}
+                        <option value="{{ dep }}">{{ dep }}</option>
+                    {% endfor %}
+                </select>
+                <p id="department_error" class="hidden text-sm font-bold text-red-600 mt-2">Department is required.</p>
+            </div>
+
+            <button type="submit" id="submit_course"
+                class="w-full bg-amber-500 text-white font-bold py-3 rounded-lg hover:bg-amber-600">
+                Create Course
+            </button>
+        </form>
+    </div>
+</div>
+{% endif %}
+
 <script>
+// Coordinator tabs + form validation
+document.addEventListener('DOMContentLoaded', function() {
+    const isCoordinator = {{ 'true' if is_coordinator else 'false' }};
+    if (isCoordinator) {
+        const tabOverview = document.getElementById('tab-overview');
+        const tabAddCourse = document.getElementById('tab-add-course');
+        const panelOverview = document.getElementById('panel-overview');
+        const panelAddCourse = document.getElementById('panel-add-course');
+
+        function showOverview() {
+            tabOverview.className = 'px-4 py-2 rounded-lg font-bold text-sm bg-slate-900 text-white';
+            tabAddCourse.className = 'px-4 py-2 rounded-lg font-bold text-sm bg-white text-slate-700 border border-slate-200 hover:bg-slate-50';
+            panelOverview.classList.remove('hidden');
+            panelAddCourse.classList.add('hidden');
+        }
+
+        function showAddCourse() {
+            tabAddCourse.className = 'px-4 py-2 rounded-lg font-bold text-sm bg-slate-900 text-white';
+            tabOverview.className = 'px-4 py-2 rounded-lg font-bold text-sm bg-white text-slate-700 border border-slate-200 hover:bg-slate-50';
+            panelOverview.classList.add('hidden');
+            panelAddCourse.classList.remove('hidden');
+        }
+
+        tabOverview.addEventListener('click', showOverview);
+        tabAddCourse.addEventListener('click', showAddCourse);
+
+        const form = document.getElementById('add-course-form');
+        const submitBtn = document.getElementById('submit_course');
+        const courseCode = document.getElementById('course_code');
+        const title = document.getElementById('title');
+        const courseType = document.getElementById('course_type');
+        const capacity = document.getElementById('capacity');
+        const department = document.getElementById('department');
+
+        function setVisible(id, visible) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.classList.toggle('hidden', !visible);
+        }
+
+        function validate() {
+            const codeOk = courseCode.value.trim().length > 0;
+            const titleOk = title.value.trim().length > 0;
+            const typeOk = (courseType.value === 'Core' || courseType.value === 'Elective');
+            const capVal = parseInt(capacity.value, 10);
+            const capOk = !Number.isNaN(capVal) && capVal > 0;
+            const depOk = department.value.trim().length > 0;
+
+            setVisible('course_code_error', !codeOk);
+            setVisible('title_error', !titleOk);
+            setVisible('course_type_error', !typeOk);
+            setVisible('capacity_error', !capOk);
+            setVisible('department_error', !depOk);
+
+            const ok = codeOk && titleOk && typeOk && capOk && depOk;
+            submitBtn.disabled = !ok;
+            submitBtn.classList.toggle('opacity-50', !ok);
+            submitBtn.classList.toggle('cursor-not-allowed', !ok);
+            return ok;
+        }
+
+        [courseCode, title, courseType, capacity, department].forEach(el => {
+            el.addEventListener('input', validate);
+            el.addEventListener('change', validate);
+        });
+
+        form.addEventListener('submit', function(e) {
+            if (!validate()) {
+                e.preventDefault();
+            }
+        });
+
+        // Initial state
+        validate();
+        showOverview();
+    }
+});
+
 // Load courses for the staff member
 document.addEventListener('DOMContentLoaded', function() {
     const staffId = {{ extra.id if extra else 'null' }};
     if (!staffId) return;
+
+    // The assigned-courses widget is only rendered for certain roles.
+    if (!document.getElementById('courses-loading')) return;
 
     loadCourses(staffId);
 });

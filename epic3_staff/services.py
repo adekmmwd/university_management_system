@@ -15,7 +15,7 @@ def get_staff_courses(staff_id):
     try:
         # Query staff_courses with joined course information
         response = supabase.table("staff_courses").select(
-            "id, role, academic_year, courses(id, course_code, course_name, department)"
+            "id, role, academic_year, courses(id, course_code, title, department)"
         ).eq("staff_id", staff_id).execute()
         
         if not response.data:
@@ -28,7 +28,7 @@ def get_staff_courses(staff_id):
                 course_data = assignment["courses"]
                 courses.append({
                     "course_id": course_data.get("course_code"),
-                    "course_name": course_data.get("course_name"),
+                    "course_name": course_data.get("title"),
                     "department": course_data.get("department"),
                     "role": assignment.get("role", "Professor"),
                     "academic_year": assignment.get("academic_year")
@@ -52,8 +52,31 @@ def get_staff_by_user_id(user_id):
         The staff record or None if not found
     """
     try:
-        response = supabase.table("staff").select("id, staff_id, name").eq("user_id", user_id).execute()
+        response = supabase.table("staff").select("id, staff_id, name, uuid, department").eq("user_id", user_id).execute()
         return response.data[0] if response.data else None
     except Exception as e:
         print(f"Error retrieving staff record for user {user_id}: {str(e)}")
         return None
+
+
+def get_departments(preferred=None):
+    """Get a stable list of departments for dropdowns."""
+    try:
+        staff = supabase.table("staff").select("department").execute().data or []
+        departments = []
+        for row in staff:
+            dep = (row.get("department") or "").strip()
+            if dep and dep not in departments:
+                departments.append(dep)
+
+        if preferred:
+            preferred = preferred.strip()
+            if preferred and preferred in departments:
+                departments = [preferred] + [d for d in departments if d != preferred]
+            elif preferred:
+                departments = [preferred] + departments
+
+        return sorted(departments) if not preferred else departments
+    except Exception as e:
+        print(f"Error retrieving departments: {str(e)}")
+        return [preferred] if preferred else []
