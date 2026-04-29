@@ -19,6 +19,39 @@ def get_course(course_id):
         return None
 
 
+def get_student_department(user_id):
+    """
+    Get the department for a student by user ID.
+    """
+    try:
+        response = supabase.table("students").select("department").eq("user_id", user_id).execute()
+        return response.data[0]["department"] if response.data else None
+    except Exception as e:
+        print(f"Error retrieving department for user {user_id}: {str(e)}")
+        return None
+
+
+def get_subjects_by_department(department):
+    """
+    Retrieve all subjects for a given department.
+    """
+    try:
+        response = (
+            supabase.table("courses")
+            .select("id, course_code, course_name, department, subject_type, description")
+            .eq("department", department)
+            .order("course_name")
+            .execute()
+        )
+        subjects = response.data if response.data else []
+        for subject in subjects:
+            subject["subject_type"] = subject.get("subject_type") or "Elective"
+        return subjects
+    except Exception as e:
+        print(f"Error retrieving subjects for department {department}: {str(e)}")
+        return []
+
+
 def get_all_courses():
     """
     Retrieve all courses from the database.

@@ -1,0 +1,129 @@
+{% extends "base.html" %} {% block content %}
+<div class="max-w-6xl mx-auto">
+  <div
+    class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4"
+  >
+    <div>
+      <h1 class="text-3xl font-bold">My Curriculum</h1>
+      <p class="text-slate-600 mt-2">
+        Subjects for your department{% if department %}: {{ department }}{%
+        endif %}
+      </p>
+    </div>
+    <div>
+      <a
+        href="{{ url_for('staff.profile') }}"
+        class="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 font-medium"
+      >
+        &larr; Back to Dashboard
+      </a>
+    </div>
+  </div>
+
+  {% if not department %}
+  <div
+    class="bg-white p-8 rounded-lg shadow-sm border border-slate-200 text-center"
+  >
+    <p class="text-slate-500">
+      No subjects available. Please update your department in your profile.
+    </p>
+  </div>
+  {% else %} {% if not core_subjects and not elective_subjects %}
+  <div
+    class="bg-white p-8 rounded-lg shadow-sm border border-slate-200 text-center"
+  >
+    <p class="text-slate-500">No subjects available for your department yet.</p>
+  </div>
+  {% else %}
+  <div class="grid gap-6 lg:grid-cols-2">
+    <section class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h2 class="text-2xl font-bold">Core Subjects</h2>
+          <p class="text-slate-500 text-sm">
+            Mandatory curriculum requirements.
+          </p>
+        </div>
+        <span
+          class="inline-flex items-center px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-sm"
+          >{{ core_subjects|length }}</span
+        >
+      </div>
+      {% if core_subjects %}
+      <div class="space-y-4">
+        {% for subject in core_subjects %}
+        <div
+          class="border border-slate-200 rounded-xl p-4 hover:border-blue-300 transition-colors"
+        >
+          <div class="flex items-start justify-between gap-4">
+            <div>
+              <p class="text-slate-500 text-sm mb-1">
+                {{ subject.course_code }}
+              </p>
+              <h3 class="text-xl font-semibold text-slate-900">
+                {{ subject.course_name }}
+              </h3>
+            </div>
+            <span
+              class="inline-flex items-center px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-bold"
+              >Core</span
+            >
+          </div>
+          {% if subject.description %}
+          <p class="mt-3 text-slate-600 text-sm">{{ subject.description }}</p>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="text-slate-500">No core subjects found for your department.</p>
+      {% endif %}
+    </section>
+
+    <section class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h2 class="text-2xl font-bold">Elective Subjects</h2>
+          <p class="text-slate-500 text-sm">Optional courses you can choose.</p>
+        </div>
+        <span
+          class="inline-flex items-center px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-sm"
+          >{{ elective_subjects|length }}</span
+        >
+      </div>
+      {% if elective_subjects %}
+      <div class="space-y-4">
+        {% for subject in elective_subjects %}
+        <div
+          class="border border-slate-200 rounded-xl p-4 hover:border-blue-300 transition-colors"
+        >
+          <div class="flex items-start justify-between gap-4">
+            <div>
+              <p class="text-slate-500 text-sm mb-1">
+                {{ subject.course_code }}
+              </p>
+              <h3 class="text-xl font-semibold text-slate-900">
+                {{ subject.course_name }}
+              </h3>
+            </div>
+            <span
+              class="inline-flex items-center px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-bold"
+              >Elective</span
+            >
+          </div>
+          {% if subject.description %}
+          <p class="mt-3 text-slate-600 text-sm">{{ subject.description }}</p>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="text-slate-500">
+        No elective subjects found for your department.
+      </p>
+      {% endif %}
+    </section>
+  </div>
+  {% endif %} {% endif %}
+</div>
+{% endblock %}

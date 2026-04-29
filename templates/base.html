@@ -21,6 +21,13 @@
         class="mb-4 hover:text-amber-400"
         >Course Catalog</a
       >
+      {% if session.get('role') == 'student' %}
+      <a
+        href="{{ url_for('curriculum.my_curriculum') }}"
+        class="mb-4 hover:text-amber-400"
+        >My Curriculum</a
+      >
+      {% endif %}
       <a
         href="{{ url_for('community.students_list') }}"
         class="mb-4 hover:text-amber-400"
