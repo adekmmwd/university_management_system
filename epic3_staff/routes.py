@@ -79,6 +79,20 @@ def create_course():
 
     created_by = staff_member["uuid"]
 
+    existing = (
+        supabase.table("courses")
+        .select("id")
+        .eq("course_code", course_code)
+        .limit(1)
+        .execute()
+    )
+    if getattr(existing, "data", None):
+        flash(
+            f"Course code {course_code} already exists. Please choose a different code.",
+            "danger",
+        )
+        return redirect(url_for("staff.profile"))
+
     try:
         resp = (
             supabase.table("courses")

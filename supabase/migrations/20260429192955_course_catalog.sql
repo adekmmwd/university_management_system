@@ -15,20 +15,20 @@ ALTER TABLE public.staff
 ADD COLUMN IF NOT EXISTS uuid uuid;
 
 UPDATE public.staff
-SET uuid = uuid_generate_v4()
+SET uuid = extensions.uuid_generate_v4()
 WHERE uuid IS NULL;
 
 ALTER TABLE public.staff
 ALTER COLUMN uuid SET NOT NULL;
 
 ALTER TABLE public.staff
-ALTER COLUMN uuid SET DEFAULT uuid_generate_v4();
+ALTER COLUMN uuid SET DEFAULT extensions.uuid_generate_v4();
 
 CREATE UNIQUE INDEX IF NOT EXISTS staff_uuid_unique_idx ON public.staff(uuid);
 
 -- Course Catalog
 CREATE TABLE public.courses (
-	id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+	id uuid PRIMARY KEY DEFAULT extensions.uuid_generate_v4(),
 	course_code varchar NOT NULL UNIQUE,
 	title varchar NOT NULL,
 	description text,
