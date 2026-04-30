@@ -69,7 +69,15 @@
                 <td class="p-4">{{ s.department }}</td>
                 <td class="p-4">{{ s.year }}</td>
                 <td class="p-4">
-                    <a href="{{ url_for('community.student_edit', sid=s.id) }}" class="text-blue-600 font-bold hover:underline">Edit</a>
+                    <div class="flex items-center gap-4">
+                        <a href="{{ url_for('community.student_edit', sid=s.id) }}" class="text-blue-600 font-bold hover:underline">Edit</a>
+                        <form method="POST" action="{{ url_for('auth.send_invitation') }}">
+                            <input type="hidden" name="target_type" value="student" />
+                            <input type="hidden" name="target_id" value="{{ s.id }}" />
+                            <input type="hidden" name="next" value="{{ request.full_path }}" />
+                            <button type="submit" class="text-amber-600 font-bold hover:underline">Send Invitation</button>
+                        </form>
+                    </div>
                 </td>
             </tr>
             {% else %}
@@ -131,7 +139,15 @@ function updateTable(students) {
                 <td class="p-4">${student.department}</td>
                 <td class="p-4">${student.year}</td>
                 <td class="p-4">
-                    <a href="/students/${student.id}/edit" class="text-blue-600 font-bold hover:underline">Edit</a>
+                    <div class="flex items-center gap-4">
+                        <a href="/students/${student.id}/edit" class="text-blue-600 font-bold hover:underline">Edit</a>
+                        <form method="POST" action="/invitations/send">
+                            <input type="hidden" name="target_type" value="student" />
+                            <input type="hidden" name="target_id" value="${student.id}" />
+                            <input type="hidden" name="next" value="${window.location.pathname + window.location.search}" />
+                            <button type="submit" class="text-amber-600 font-bold hover:underline">Send Invitation</button>
+                        </form>
+                    </div>
                 </td>
             `;
             tbody.insertBefore(row, noResultsRow);

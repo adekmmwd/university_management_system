@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, session, jsonify, request, redirec
 from core.database import supabase
 from core.auth import login_required, course_coordinator_required
 from epic3_staff.services import get_staff_courses, get_staff_by_user_id, get_departments
+from epic2_curriculum.services import list_courses_for_student
 
 staff_bp = Blueprint("staff", __name__)
 
@@ -28,12 +29,20 @@ def profile():
     if role == "course_coordinator":
         departments = get_departments(preferred=(extra_info or {}).get("department"))
 
+    available_courses = []
+    if role == "student" and extra_info and extra_info.get("uuid"):
+        try:
+            available_courses = list_courses_for_student(extra_info["uuid"]) or []
+        except Exception:
+            available_courses = []
+
     return render_template(
         "staff/dashboard.html",
         user=user,
         extra=extra_info,
         role=role,
         departments=departments,
+        available_courses=available_courses,
     )
 
 

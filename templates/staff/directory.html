@@ -11,6 +11,17 @@
             <p><strong>Email:</strong> {{ s.email }}</p>
             <p><strong>Office:</strong> {{ s.office_hours }}</p>
         </div>
+
+        {% if session.get('role') == 'admin' %}
+        <form method="POST" action="{{ url_for('auth.send_invitation') }}" class="mt-5">
+            <input type="hidden" name="target_type" value="staff" />
+            <input type="hidden" name="target_id" value="{{ s.id }}" />
+            <input type="hidden" name="next" value="{{ request.path }}" />
+            <button type="submit" class="w-full bg-amber-500 text-white px-4 py-2 rounded font-bold hover:bg-amber-600">
+                Send Invitation
+            </button>
+        </form>
+        {% endif %}
     </div>
     {% else %}
     <p class="text-slate-500">No staff members found.</p>

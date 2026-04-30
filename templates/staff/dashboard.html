@@ -44,6 +44,59 @@
         </div>
     </div>
 
+    <!-- Course Registration (Student Dashboard) -->
+    {% if role == 'student' and extra %}
+    <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+        <h3 class="text-xl font-bold mb-4">Course Catalog</h3>
+
+        {% if not available_courses %}
+            <p class="text-slate-500">No courses available right now.</p>
+        {% else %}
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead class="bg-slate-100 border-b border-slate-200">
+                        <tr>
+                            <th class="text-left px-4 py-3 font-bold text-slate-700">Course</th>
+                            <th class="text-left px-4 py-3 font-bold text-slate-700">Title</th>
+                            <th class="text-left px-4 py-3 font-bold text-slate-700">Type</th>
+                            <th class="text-left px-4 py-3 font-bold text-slate-700">Department</th>
+                            <th class="text-left px-4 py-3 font-bold text-slate-700">Seats</th>
+                            <th class="text-left px-4 py-3 font-bold text-slate-700">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for c in available_courses %}
+                        {% set can_register = (c.department_match and (not c.is_full) and (not c.already_enrolled)) %}
+                        <tr class="border-b border-slate-100">
+                            <td class="px-4 py-3 font-mono font-bold">{{ c.course_code }}</td>
+                            <td class="px-4 py-3">{{ c.title }}</td>
+                            <td class="px-4 py-3">
+                                <span class="px-2 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700">{{ c.course_type }}</span>
+                            </td>
+                            <td class="px-4 py-3">{{ c.department }}</td>
+                            <td class="px-4 py-3">{{ c.enrolled_count }}/{{ c.capacity }}</td>
+                            <td class="px-4 py-3">
+                                <form method="POST" action="{{ url_for('curriculum.register_course', course_id=c.id) }}">
+                                    {% if c.already_enrolled %}
+                                        <button type="button" disabled class="px-3 py-2 rounded-lg font-bold bg-slate-200 text-slate-600 cursor-not-allowed">Registered</button>
+                                    {% elif c.is_full %}
+                                        <button type="button" disabled class="px-3 py-2 rounded-lg font-bold bg-slate-200 text-slate-600 cursor-not-allowed">Full</button>
+                                    {% elif not c.department_match %}
+                                        <button type="button" disabled class="px-3 py-2 rounded-lg font-bold bg-slate-200 text-slate-600 cursor-not-allowed">Different Dept</button>
+                                    {% else %}
+                                        <button type="submit" class="px-3 py-2 rounded-lg font-bold bg-amber-500 text-white hover:bg-amber-600">Register</button>
+                                    {% endif %}
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
     <!-- Assigned Courses Widget -->
     {% if role in ['staff', 'professor', 'ta', 'admin'] and extra %}
     <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
