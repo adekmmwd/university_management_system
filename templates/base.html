@@ -1,44 +1,70 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
+  <head>
     <title>UniManage</title>
     <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-slate-50 text-slate-800 font-sans flex min-h-screen">
+  </head>
+  <body class="bg-slate-50 text-slate-800 font-sans flex min-h-screen">
     {% if session.get('user_id') %}
     <aside class="w-64 bg-slate-900 text-white p-6 flex flex-col">
-        <h2 class="text-xl font-bold mb-8 text-amber-500">UniManage</h2>
-        <a href="{{ url_for('staff.profile') }}" class="mb-4 hover:text-amber-400">My Dashboard</a>
-        <a href="{{ url_for('staff.directory') }}" class="mb-4 hover:text-amber-400">Staff Directory</a>
-        <a href="{{ url_for('community.students_list') }}" class="mb-4 hover:text-amber-400">Student Records</a>
-        <a href="{{ url_for('auth.logout') }}" class="mt-auto text-red-400 hover:underline">Logout</a>
+      <h2 class="text-xl font-bold mb-8 text-amber-500">UniManage</h2>
+      <a href="{{ url_for('staff.profile') }}" class="mb-4 hover:text-amber-400"
+        >My Dashboard</a
+      >
+      <a
+        href="{{ url_for('staff.directory') }}"
+        class="mb-4 hover:text-amber-400"
+        >Staff Directory</a
+      >
+      <a
+        href="{{ url_for('curriculum.courses_list') }}"
+        class="mb-4 hover:text-amber-400"
+        >Course Catalog</a
+      >
+      {% if session.get('role') == 'student' %}
+      <a
+        href="{{ url_for('curriculum.my_curriculum') }}"
+        class="mb-4 hover:text-amber-400"
+        >My Curriculum</a
+      >
+      {% endif %}
+      <a
+        href="{{ url_for('community.students_list') }}"
+        class="mb-4 hover:text-amber-400"
+        >Student Records</a
+      >
+      <a
+        href="{{ url_for('auth.logout') }}"
+        class="mt-auto text-red-400 hover:underline"
+        >Logout</a
+      >
     </aside>
     {% endif %}
-    
+
     <main class="flex-1 p-8">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                <div class="mb-6 space-y-2 max-w-2xl">
-                {% for category, message in messages %}
-                    {% set cat = (category or 'info') | lower %}
-                    {% if cat in ['success'] %}
-                        {% set cls = 'bg-green-100 text-green-800 border border-green-200' %}
-                    {% elif cat in ['warning'] %}
-                        {% set cls = 'bg-amber-100 text-amber-800 border border-amber-200' %}
-                    {% elif cat in ['danger', 'error'] %}
-                        {% set cls = 'bg-red-100 text-red-800 border border-red-200' %}
-                    {% else %}
-                        {% set cls = 'bg-blue-100 text-blue-800 border border-blue-200' %}
-                    {% endif %}
-                    <div class="px-4 py-3 rounded-lg font-bold text-sm {{ cls }}">
-                        {{ message }}
-                    </div>
-                {% endfor %}
-                </div>
-            {% endif %}
-        {% endwith %}
-        
-        {% block content %}{% endblock %}
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="mb-6 space-y-2 max-w-2xl">
+            {% for category, message in messages %}
+              {% set cat = (category or 'info') | lower %}
+              {% if cat in ['success'] %}
+                {% set cls = 'bg-green-100 text-green-800 border border-green-200' %}
+              {% elif cat in ['warning'] %}
+                {% set cls = 'bg-amber-100 text-amber-800 border border-amber-200' %}
+              {% elif cat in ['danger', 'error'] %}
+                {% set cls = 'bg-red-100 text-red-800 border border-red-200' %}
+              {% else %}
+                {% set cls = 'bg-blue-100 text-blue-800 border border-blue-200' %}
+              {% endif %}
+              <div class="px-4 py-3 rounded-lg font-bold text-sm {{ cls }}">
+                {{ message }}
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+
+      {% block content %}{% endblock %}
     </main>
-</body>
+  </body>
 </html>

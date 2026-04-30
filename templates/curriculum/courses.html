@@ -1,0 +1,80 @@
+{% extends "base.html" %} {% block content %}
+<div class="flex items-center justify-between mb-6">
+  <h1 class="text-3xl font-bold">Course Catalog</h1>
+  {% if role in ['staff', 'professor', 'ta', 'admin'] %}
+  <a
+    href="{{ url_for('staff.profile') }}"
+    class="text-blue-600 hover:text-blue-800 font-medium"
+  >
+    ← Back to Dashboard
+  </a>
+  {% endif %}
+</div>
+
+{% if courses %}
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+  {% for course in courses %}
+  <div
+    class="bg-white p-6 rounded-lg shadow-sm border border-slate-200 hover:shadow-md transition-shadow"
+  >
+    <div class="flex items-start justify-between mb-3">
+      <span
+        class="bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-full"
+      >
+        {{ course.course_code }}
+      </span>
+      {% if course.capacity %}
+      <span class="text-slate-500 text-sm">
+        👥 {{ course.capacity }} students
+      </span>
+      {% endif %}
+    </div>
+
+    <h3 class="text-lg font-bold text-slate-900 mb-2">
+      {{ course.course_name }}
+    </h3>
+
+    {% if course.department %}
+    <p class="text-slate-600 text-sm mb-2">📚 {{ course.department }}</p>
+    {% endif %} {% if course.description %}
+    <p class="text-slate-600 text-sm mb-4 line-clamp-3">
+      {{ course.description }}
+    </p>
+    {% endif %} {% if course.credit_hours %}
+    <p class="text-slate-500 text-xs mb-4">
+      Credits: {{ course.credit_hours }}
+    </p>
+    {% endif %} {% if role in ['staff', 'professor', 'ta', 'admin'] %}
+    <div class="pt-3 border-t border-slate-100">
+      <a
+        href="{{ url_for('curriculum.edit_course', course_id=course.id) }}"
+        class="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 font-medium text-sm"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-4 w-4"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+          />
+        </svg>
+        Edit Course
+      </a>
+    </div>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div
+  class="bg-white p-8 rounded-lg shadow-sm border border-slate-200 text-center"
+>
+  <p class="text-slate-500 text-lg">No courses available yet.</p>
+</div>
+{% endif %} {% endblock %}

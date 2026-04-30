@@ -7,7 +7,7 @@ load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "ums-agile-phase1-2026")
 
-# 1. Import your 3 Blueprints
+# 1. Import your 4 Blueprints
 from core.auth import auth_bp
 from epic2_curriculum.routes import curriculum_bp
 from epic3_staff.routes import staff_bp
