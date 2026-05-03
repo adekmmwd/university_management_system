@@ -1,0 +1,202 @@
+{#
+  Schedule Widget — reusable partial.
+
+  Expects:
+    schedule_courses  – list[dict]  (course_code, title, course_type, department, capacity?)
+    role              – str         ('student' | 'course_coordinator' | 'staff' | …)
+#}
+
+<div id="schedule-widget" class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+  <!-- Header -->
+  <div class="px-6 py-4 bg-gradient-to-r from-slate-900 to-slate-800 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <span class="w-9 h-9 rounded-lg bg-amber-500/20 flex items-center justify-center text-amber-400 text-lg">📅</span>
+      <div>
+        <h3 class="text-lg font-bold text-white">My Schedule</h3>
+        <p class="text-slate-400 text-xs mt-0.5">
+          {% if role == 'student' %}
+            Your enrolled courses
+          {% else %}
+            Courses you coordinate
+          {% endif %}
+        </p>
+      </div>
+    </div>
+    {% if schedule_courses %}
+    <span class="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-400">
+      {{ schedule_courses | length }} course{{ 's' if schedule_courses | length != 1 else '' }}
+    </span>
+    {% endif %}
+  </div>
+
+  <!-- Body -->
+  <div class="p-6">
+    {% if not schedule_courses %}
+    <!-- Empty State -->
+    <div id="schedule-empty-state" class="text-center py-10">
+      <div class="mx-auto w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
+        <span class="text-2xl">📭</span>
+      </div>
+      {% if role == 'student' %}
+      <p class="text-slate-700 font-bold text-lg mb-1">You are not enrolled in any courses yet</p>
+      <p class="text-slate-500 text-sm mb-5">Browse the course catalog and register for your courses.</p>
+      <a
+        href="{{ url_for('curriculum.courses_list') }}"
+        class="inline-flex items-center gap-2 px-5 py-2.5 bg-amber-500 text-white text-sm font-bold rounded-lg hover:bg-amber-600 transition-colors"
+      >
+        Go to Course Catalog →
+      </a>
+      {% else %}
+      <p class="text-slate-700 font-bold text-lg mb-1">You have no assigned courses for this term</p>
+      <p class="text-slate-500 text-sm">Courses you create or are assigned to will appear here.</p>
+      {% endif %}
+    </div>
+
+    {% else %}
+    <!-- Course Cards (responsive grid) -->
+    <div id="schedule-course-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      {% for course in schedule_courses %}
+      <div class="schedule-card group relative rounded-lg border border-slate-200 bg-white p-4 hover:shadow-md hover:border-amber-300 transition-all duration-200">
+        <!-- Course type badge -->
+        <div class="flex items-center justify-between mb-3">
+          <span class="font-mono text-sm font-bold text-slate-900 tracking-wide">{{ course.course_code }}</span>
+          <span class="px-2 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider
+            {% if course.course_type == 'Core' %}
+              bg-blue-100 text-blue-700
+            {% else %}
+              bg-emerald-100 text-emerald-700
+            {% endif %}
+          ">{{ course.course_type }}</span>
+        </div>
+
+        <!-- Title -->
+        <h4 class="text-sm font-semibold text-slate-800 leading-snug mb-2 line-clamp-2">
+          {{ course.title }}
+        </h4>
+
+        <!-- Meta row -->
+        <div class="flex items-center gap-2 text-xs text-slate-500 mt-auto">
+          <span class="inline-flex items-center gap-1">
+            🏛️ {{ course.department }}
+          </span>
+          {% if course.capacity is defined and course.capacity %}
+          <span class="inline-flex items-center gap-1 ml-auto">
+            👥 {{ course.capacity }}
+          </span>
+          {% endif %}
+        </div>
+
+        <!-- Hover accent bar -->
+        <div class="absolute bottom-0 left-0 right-0 h-0.5 bg-amber-500 rounded-b-lg scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300"></div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- List View (alternative — hidden by default, toggled via JS) -->
+    <div id="schedule-list-view" class="hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-slate-50 border-b border-slate-200">
+            <tr>
+              <th class="text-left px-4 py-3 font-bold text-slate-600 text-xs uppercase tracking-wider">Code</th>
+              <th class="text-left px-4 py-3 font-bold text-slate-600 text-xs uppercase tracking-wider">Title</th>
+              <th class="text-left px-4 py-3 font-bold text-slate-600 text-xs uppercase tracking-wider">Type</th>
+              <th class="text-left px-4 py-3 font-bold text-slate-600 text-xs uppercase tracking-wider">Department</th>
+              {% if role != 'student' %}
+              <th class="text-left px-4 py-3 font-bold text-slate-600 text-xs uppercase tracking-wider">Capacity</th>
+              {% endif %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for course in schedule_courses %}
+            <tr class="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+              <td class="px-4 py-3 font-mono font-bold text-slate-900">{{ course.course_code }}</td>
+              <td class="px-4 py-3 text-slate-800">{{ course.title }}</td>
+              <td class="px-4 py-3">
+                <span class="px-2 py-0.5 rounded-full text-[11px] font-bold uppercase
+                  {% if course.course_type == 'Core' %}
+                    bg-blue-100 text-blue-700
+                  {% else %}
+                    bg-emerald-100 text-emerald-700
+                  {% endif %}
+                ">{{ course.course_type }}</span>
+              </td>
+              <td class="px-4 py-3 text-slate-600">{{ course.department }}</td>
+              {% if role != 'student' %}
+              <td class="px-4 py-3 text-slate-600">{{ course.capacity }}</td>
+              {% endif %}
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- View toggle -->
+    {% if schedule_courses | length > 0 %}
+    <div class="mt-4 flex items-center justify-end gap-2 border-t border-slate-100 pt-3">
+      <span class="text-xs text-slate-400 mr-1">View:</span>
+      <button
+        id="schedule-view-grid-btn"
+        type="button"
+        class="p-1.5 rounded text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors"
+        title="Grid view"
+        aria-label="Grid view"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
+          />
+        </svg>
+      </button>
+      <button
+        id="schedule-view-list-btn"
+        type="button"
+        class="p-1.5 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition-colors"
+        title="List view"
+        aria-label="List view"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M4 6h16M4 12h16M4 18h16"
+          />
+        </svg>
+      </button>
+    </div>
+    {% endif %}
+    {% endif %}
+  </div>
+</div>
+
+<!-- Schedule Widget — view toggle script -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const gridBtn  = document.getElementById('schedule-view-grid-btn');
+  const listBtn  = document.getElementById('schedule-view-list-btn');
+  const gridView = document.getElementById('schedule-course-grid');
+  const listView = document.getElementById('schedule-list-view');
+
+  if (!gridBtn || !listBtn || !gridView || !listView) return;
+
+  function showGrid() {
+    gridView.classList.remove('hidden');
+    listView.classList.add('hidden');
+    gridBtn.classList.replace('text-slate-400', 'text-slate-700');
+    gridBtn.classList.add('bg-slate-100');
+    listBtn.classList.replace('text-slate-700', 'text-slate-400');
+    listBtn.classList.remove('bg-slate-100');
+  }
+
+  function showList() {
+    gridView.classList.add('hidden');
+    listView.classList.remove('hidden');
+    listBtn.classList.replace('text-slate-400', 'text-slate-700');
+    listBtn.classList.add('bg-slate-100');
+    gridBtn.classList.replace('text-slate-700', 'text-slate-400');
+    gridBtn.classList.remove('bg-slate-100');
+  }
+
+  gridBtn.addEventListener('click', showGrid);
+  listBtn.addEventListener('click', showList);
+});
+</script>

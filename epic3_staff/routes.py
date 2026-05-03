@@ -13,7 +13,12 @@ from epic3_staff.services import (
     set_announcement_archive_status,
     delete_announcement,
 )
-from epic2_curriculum.services import list_courses_for_student
+from epic2_curriculum.services import (
+    list_courses_for_student,
+    get_enrolled_courses_for_student,
+    get_coordinated_courses_for_staff,
+    get_student_by_user_id,
+)
 
 staff_bp = Blueprint("staff", __name__)
 
@@ -47,6 +52,21 @@ def profile():
         except Exception:
             available_courses = []
 
+    # --- Schedule Widget data ------------------------------------------------
+    schedule_courses = []
+    if role == "student" and extra_info and extra_info.get("uuid"):
+        try:
+            schedule_courses = get_enrolled_courses_for_student(extra_info["uuid"]) or []
+        except Exception:
+            schedule_courses = []
+    elif role in ["staff", "professor", "ta", "admin", "course_coordinator"] and extra_info:
+        staff_uuid = extra_info.get("uuid")
+        if staff_uuid:
+            try:
+                schedule_courses = get_coordinated_courses_for_staff(staff_uuid) or []
+            except Exception:
+                schedule_courses = []
+
     pinned_announcements = get_pinned_announcements()
 
     return render_template(
@@ -57,6 +77,7 @@ def profile():
         departments=departments,
         available_courses=available_courses,
         pinned_announcements=pinned_announcements,
+        schedule_courses=schedule_courses,
     )
 
 

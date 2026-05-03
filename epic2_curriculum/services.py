@@ -99,6 +99,72 @@ def get_subjects_by_department(department: str) -> list[dict[str, Any]]:
         return []
 
 
+def get_enrolled_courses_for_student(student_uuid: str) -> list[dict[str, Any]]:
+    """Return the courses a student is currently enrolled in.
+
+    Used by the Schedule Widget on the student dashboard.
+
+    Args:
+        student_uuid: The student's UUID from the students table.
+
+    Returns:
+        A list of course dicts with keys: id, course_code, title, course_type, department.
+    """
+    try:
+        resp = (
+            supabase.table("enrollments")
+            .select("course_id, courses(id, course_code, title, course_type, department)")
+            .eq("student_id", student_uuid)
+            .execute()
+        )
+        rows = resp.data if getattr(resp, "data", None) else []
+        courses: list[dict[str, Any]] = []
+        for row in rows:
+            course = row.get("courses")
+            if course:
+                courses.append(
+                    {
+                        "id": course.get("id"),
+                        "course_code": course.get("course_code"),
+                        "title": course.get("title"),
+                        "course_type": course.get("course_type"),
+                        "department": course.get("department"),
+                    }
+                )
+        # Sort by course_code for consistent display
+        courses.sort(key=lambda c: c.get("course_code", ""))
+        return courses
+    except Exception as e:
+        print(f"Error retrieving enrolled courses for student {student_uuid}: {e}")
+        return []
+
+
+def get_coordinated_courses_for_staff(staff_uuid: str) -> list[dict[str, Any]]:
+    """Return the courses a staff member created / coordinates.
+
+    Used by the Schedule Widget on the staff dashboard.
+
+    Args:
+        staff_uuid: The staff member's UUID from the staff table.
+
+    Returns:
+        A list of course dicts with keys: id, course_code, title, course_type,
+        capacity, department.
+    """
+    try:
+        resp = (
+            supabase.table("courses")
+            .select("id, course_code, title, course_type, capacity, department")
+            .eq("created_by", staff_uuid)
+            .order("course_code")
+            .execute()
+        )
+        return resp.data if getattr(resp, "data", None) else []
+    except Exception as e:
+        print(f"Error retrieving coordinated courses for staff {staff_uuid}: {e}")
+        return []
+
+
 def update_course(
     course_id: str,
     title: Optional[str] = None,
