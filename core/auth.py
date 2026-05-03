@@ -98,6 +98,20 @@ def admin_required(f):
     return wrapped
 
 
+def admin_or_head_staff_required(f):
+    @wraps(f)
+    def wrapped(*args, **kwargs):
+        if "user_id" not in session:
+            flash("Please log in first.", "warning")
+            return redirect(url_for("auth.login"))
+        if session.get("role") not in {"admin", "head_staff"}:
+            flash("Access denied. Admin or Head Staff privileges required.", "danger")
+            return redirect(url_for("staff.profile"))
+        return f(*args, **kwargs)
+
+    return wrapped
+
+
 @auth_bp.route("/invitations/send", methods=["POST"])
 @admin_required
 def send_invitation():

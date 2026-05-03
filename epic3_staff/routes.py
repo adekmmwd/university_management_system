@@ -1,7 +1,18 @@
 from flask import Blueprint, render_template, session, jsonify, request, redirect, url_for, flash
 from core.database import supabase
-from core.auth import login_required, course_coordinator_required
-from epic3_staff.services import get_staff_courses, get_staff_by_user_id, get_departments
+from core.auth import login_required, course_coordinator_required, admin_or_head_staff_required
+from epic3_staff.services import (
+    get_staff_courses,
+    get_staff_by_user_id,
+    get_departments,
+    create_announcement,
+    get_pinned_announcements,
+    get_announcements,
+    get_announcement_by_id,
+    update_announcement,
+    set_announcement_archive_status,
+    delete_announcement,
+)
 from epic2_curriculum.services import list_courses_for_student
 
 staff_bp = Blueprint("staff", __name__)
@@ -36,6 +47,8 @@ def profile():
         except Exception:
             available_courses = []
 
+    pinned_announcements = get_pinned_announcements()
+
     return render_template(
         "staff/dashboard.html",
         user=user,
@@ -43,6 +56,7 @@ def profile():
         role=role,
         departments=departments,
         available_courses=available_courses,
+        pinned_announcements=pinned_announcements,
     )
 
 
@@ -148,6 +162,126 @@ def create_course():
         else:
             flash("Failed to create course. Please try again.", "danger")
         return redirect(url_for("staff.profile"))
+
+
+@staff_bp.route("/admin/announcements/new")
+@login_required
+@admin_or_head_staff_required
+def new_announcement():
+    return render_template("staff/announcement_form.html")
+
+
+@staff_bp.route("/admin/announcements/create", methods=["POST"])
+@login_required
+@admin_or_head_staff_required
+def create_announcement_route():
+    title = (request.form.get("title") or "").strip()
+    content = (request.form.get("content") or "").strip()
+    is_pinned = bool(request.form.get("is_pinned"))
+    expiry_date = (request.form.get("expiry_date") or "").strip() or None
+
+    if not title:
+        flash("Announcement title is required.", "danger")
+        return redirect(url_for("staff.new_announcement"))
+    if not content:
+        flash("Announcement content is required.", "danger")
+        return redirect(url_for("staff.new_announcement"))
+
+    staff_member = get_staff_by_user_id(session.get("user_id"))
+    if not staff_member or not staff_member.get("uuid"):
+        flash("Staff profile not found for announcement creation.", "danger")
+        return redirect(url_for("staff.profile"))
+
+    created_by = staff_member["uuid"]
+    success, message = create_announcement(title, content, is_pinned, created_by, expiry_date)
+    if success:
+        flash("Announcement posted successfully.", "success")
+        return redirect(url_for("staff.manage_announcements"))
+
+    flash(message or "Failed to post announcement. Please try again.", "danger")
+    return redirect(url_for("staff.new_announcement"))
+
+
+@staff_bp.route("/admin/announcements")
+@login_required
+@admin_or_head_staff_required
+def manage_announcements():
+    status = request.args.get("status", "active")
+    if status not in {"active", "archived"}:
+        status = "active"
+    announcements = get_announcements(status)
+    return render_template("staff/manage_announcements.html", announcements=announcements, status=status)
+
+
+@staff_bp.route("/admin/announcements/edit/<announcement_id>")
+@login_required
+@admin_or_head_staff_required
+def edit_announcement(announcement_id):
+    announcement = get_announcement_by_id(announcement_id)
+    if not announcement:
+        flash("Announcement not found.", "danger")
+        return redirect(url_for("staff.manage_announcements"))
+    return render_template("staff/announcement_form.html", announcement=announcement)
+
+
+@staff_bp.route("/admin/announcements/archive/<announcement_id>", methods=["POST"])
+@login_required
+@admin_or_head_staff_required
+def archive_announcement(announcement_id):
+    current_status = request.args.get("status", "active")
+    announcement = get_announcement_by_id(announcement_id)
+    if not announcement:
+        flash("Announcement not found.", "danger")
+        return redirect(url_for("staff.manage_announcements", status=current_status))
+
+    archived = not bool(announcement.get("is_archived"))
+    success, message = set_announcement_archive_status(announcement_id, archived)
+    if success:
+        flash(
+            "Announcement archived." if archived else "Announcement restored.",
+            "success",
+        )
+    else:
+        flash(message or "Failed to update announcement status.", "danger")
+    return redirect(url_for("staff.manage_announcements", status=current_status))
+
+
+@staff_bp.route("/admin/announcements/delete/<announcement_id>", methods=["POST"])
+@login_required
+@admin_or_head_staff_required
+def delete_announcement_route(announcement_id):
+    current_status = request.args.get("status", "active")
+    success, message = delete_announcement(announcement_id)
+    if success:
+        flash("Announcement deleted successfully.", "success")
+    else:
+        flash(message or "Failed to delete announcement.", "danger")
+    return redirect(url_for("staff.manage_announcements", status=current_status))
+
+
+@staff_bp.route("/admin/announcements/update/<announcement_id>", methods=["POST"])
+@login_required
+@admin_or_head_staff_required
+def update_announcement_route(announcement_id):
+    title = (request.form.get("title") or "").strip()
+    content = (request.form.get("content") or "").strip()
+    is_pinned = bool(request.form.get("is_pinned"))
+    expiry_date = (request.form.get("expiry_date") or "").strip() or None
+
+    if not title:
+        flash("Announcement title is required.", "danger")
+        return redirect(url_for("staff.edit_announcement", announcement_id=announcement_id))
+    if not content:
+        flash("Announcement content is required.", "danger")
+        return redirect(url_for("staff.edit_announcement", announcement_id=announcement_id))
+
+    success, message = update_announcement(announcement_id, title, content, is_pinned, expiry_date)
+    if success:
+        flash("Announcement updated successfully.", "success")
+        return redirect(url_for("staff.manage_announcements"))
+
+    flash(message or "Failed to update announcement. Please try again.", "danger")
+    return redirect(url_for("staff.edit_announcement", announcement_id=announcement_id))
 
 
 # UMS-11: Academic Staff Directory

@@ -1,9 +1,17 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from core.database import supabase
 from core.auth import login_required, admin_required
+from epic4_community.services import get_upcoming_events
 import re
 
 community_bp = Blueprint("community", __name__)
+
+
+@community_bp.route("/events")
+@login_required
+def events_feed():
+    events = get_upcoming_events()
+    return render_template("community/events_feed.html", events=events)
 
 
 def _valid_student_id(s: str) -> bool:

@@ -1,0 +1,109 @@
+{% extends "base.html" %} {% block content %}
+<div class="max-w-3xl mx-auto">
+  <div class="mb-6">
+    <h1 class="text-3xl font-bold">
+      {{ announcement.title if announcement else 'Post Announcement' }}
+    </h1>
+    <p class="text-slate-600 mt-2">
+      {{ 'Update the announcement details below.' if announcement else 'Create a
+      university-wide announcement for staff and students.' }}
+    </p>
+  </div>
+
+  <div class="bg-white p-8 rounded-lg shadow-sm border border-slate-200">
+    <form
+      method="POST"
+      action="{{ url_for('staff.update_announcement_route', announcement_id=announcement.id) if announcement else url_for('staff.create_announcement_route') }}"
+      class="space-y-6"
+    >
+      <div>
+        <label class="block text-sm font-bold text-slate-700 mb-2" for="title"
+          >Title *</label
+        >
+        <input
+          id="title"
+          name="title"
+          required
+          type="text"
+          value="{{ announcement.title if announcement else '' }}"
+          class="w-full border border-slate-300 rounded-lg px-4 py-3 focus:outline-none focus:border-slate-900"
+          placeholder="Announcement title"
+        />
+      </div>
+
+      <div>
+        <label class="block text-sm font-bold text-slate-700 mb-2" for="content"
+          >Content *</label
+        >
+        <textarea
+          id="content"
+          name="content"
+          rows="8"
+          required
+          class="w-full border border-slate-300 rounded-lg px-4 py-3 focus:outline-none focus:border-slate-900"
+          placeholder="Write the announcement message here..."
+        >
+{{ announcement.content if announcement else '' }}</textarea
+        >
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="flex items-center gap-3">
+          <input
+            id="is_pinned"
+            name="is_pinned"
+            type="checkbox"
+            {%
+            if
+            announcement
+            %}{%
+            if
+            announcement.is_pinned
+            %}checked{%
+            endif
+            %}{%
+            else
+            %}checked{%
+            endif
+            %}
+            class="h-4 w-4 text-amber-600 border-slate-300 rounded"
+          />
+          <label for="is_pinned" class="text-sm text-slate-700"
+            >Pin this announcement at the top of dashboards</label
+          >
+        </div>
+
+        <div>
+          <label
+            class="block text-sm font-bold text-slate-700 mb-2"
+            for="expiry_date"
+            >Expiry Date</label
+          >
+          <input
+            id="expiry_date"
+            name="expiry_date"
+            type="datetime-local"
+            value="{{ announcement.expiry_date[:16] if announcement and announcement.expiry_date else '' }}"
+            class="w-full border border-slate-300 rounded-lg px-4 py-3 focus:outline-none focus:border-slate-900"
+          />
+        </div>
+      </div>
+
+      <div class="flex flex-wrap gap-3 items-center">
+        <button
+          type="submit"
+          class="bg-amber-500 text-white px-5 py-3 rounded-lg font-bold hover:bg-amber-600"
+        >
+          {{ 'Update Announcement' if announcement else 'Publish Announcement'
+          }}
+        </button>
+        <a
+          href="{{ url_for('staff.manage_announcements') if announcement else url_for('staff.profile') }}"
+          class="text-slate-600 hover:text-slate-900"
+          >Cancel</a
+        >
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

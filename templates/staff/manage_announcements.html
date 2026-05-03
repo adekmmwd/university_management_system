@@ -1,0 +1,110 @@
+{% extends "base.html" %} {% block content %}
+<div class="max-w-6xl mx-auto">
+  <div
+    class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6"
+  >
+    <div>
+      <h1 class="text-3xl font-bold">Manage Announcements</h1>
+      <p class="text-slate-600 mt-2">
+        Review, edit, archive, or delete announcements for the university
+        community.
+      </p>
+    </div>
+    <div class="flex flex-wrap items-center gap-3">
+      <a
+        href="{{ url_for('staff.manage_announcements', status='active') }}"
+        class="inline-flex items-center gap-2 px-4 py-2 rounded-lg font-bold {% if status == 'active' %}bg-slate-900 text-white hover:bg-slate-700{% else %}bg-white text-slate-700 border border-slate-200 hover:bg-slate-50{% endif %}"
+        >Active</a
+      >
+      <a
+        href="{{ url_for('staff.manage_announcements', status='archived') }}"
+        class="inline-flex items-center gap-2 px-4 py-2 rounded-lg font-bold {% if status == 'archived' %}bg-slate-900 text-white hover:bg-slate-700{% else %}bg-white text-slate-700 border border-slate-200 hover:bg-slate-50{% endif %}"
+        >Archived</a
+      >
+      <a
+        href="{{ url_for('staff.new_announcement') }}"
+        class="inline-flex items-center gap-2 px-4 py-2 bg-amber-500 text-white rounded-lg font-bold hover:bg-amber-600"
+        >New Announcement</a
+      >
+    </div>
+  </div>
+
+  {% if announcements %}
+  <div class="grid grid-cols-1 gap-4">
+    {% for announcement in announcements %}
+    <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+      <div
+        class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4"
+      >
+        <div>
+          <div class="flex items-center gap-3 mb-2">
+            <h2 class="text-xl font-bold text-slate-900">
+              {{ announcement.title }}
+            </h2>
+            {% if announcement.is_pinned %}
+            <span
+              class="inline-flex items-center rounded-full bg-amber-100 text-amber-800 text-xs uppercase font-bold px-2 py-1"
+              >Pinned</span
+            >
+            {% endif %}
+          </div>
+          <p class="text-slate-500 text-sm">
+            Posted {{ announcement.created_at | default('') }}{% if
+            announcement.updated_at %} • Updated {{ announcement.updated_at }}{%
+            endif %}
+          </p>
+        </div>
+        <div class="flex flex-wrap items-center gap-3">
+          <a
+            href="{{ url_for('staff.edit_announcement', announcement_id=announcement.id) }}"
+            class="px-4 py-2 bg-slate-900 text-white rounded-lg font-bold hover:bg-slate-700"
+            >Edit</a
+          >
+          <form
+            method="POST"
+            action="{{ url_for('staff.archive_announcement', announcement_id=announcement.id, status=status) }}"
+          >
+            <button
+              type="submit"
+              class="px-4 py-2 rounded-lg font-bold {% if announcement.is_archived %}bg-blue-100 text-blue-800 hover:bg-blue-200{% else %}bg-slate-100 text-slate-800 hover:bg-slate-200{% endif %}"
+            >
+              {% if announcement.is_archived %}Restore{% else %}Archive{% endif
+              %}
+            </button>
+          </form>
+          <form
+            method="POST"
+            action="{{ url_for('staff.delete_announcement_route', announcement_id=announcement.id, status=status) }}"
+            onsubmit="
+              return confirm(
+                'Are you sure you want to permanently delete this announcement? This cannot be undone.',
+              );
+            "
+          >
+            <button
+              type="submit"
+              class="px-4 py-2 bg-red-600 text-white rounded-lg font-bold hover:bg-red-700"
+            >
+              Delete
+            </button>
+          </form>
+        </div>
+      </div>
+      <p class="text-slate-600 mt-4 whitespace-pre-line">
+        {{ announcement.content }}
+      </p>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div
+    class="bg-white p-8 rounded-lg shadow-sm border border-slate-200 text-center"
+  >
+    <p class="text-slate-500 text-lg">
+      {% if status == 'archived' %} No archived announcements found. {% else %}
+      No active announcements found. {% endif %}
+    </p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
