@@ -73,6 +73,16 @@
             <a href="{{ url_for('community.student_edit', sid=s.id) }}" class="btn btn-outline btn-xs">
               <i data-lucide="pencil" style="width:11px;height:11px;"></i>Edit
             </a>
+            {% if s.email %}
+            <form method="POST" action="{{ url_for('auth.send_invitation') }}" style="display:inline;">
+              <input type="hidden" name="target_type" value="student">
+              <input type="hidden" name="target_id" value="{{ s.id }}">
+              <input type="hidden" name="next" value="{{ request.url }}">
+              <button type="submit" class="btn btn-gold btn-xs">
+                <i data-lucide="mail" style="width:11px;height:11px;"></i>Invite
+              </button>
+            </form>
+            {% endif %}
           </div>
         </td>
       </tr>

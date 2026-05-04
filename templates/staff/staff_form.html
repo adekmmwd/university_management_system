@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Edit Staff' if staff_member else 'Add Staff Member' }}{% endblock %}
+{% block page_title %}{{ 'Edit Staff Member' if staff_member else 'Add Staff Member' }}{% endblock %}
+{% block breadcrumb %}Staff Module · {{ 'Edit' if staff_member else 'New' }}{% endblock %}
+
+{% block content %}
+<div style="max-width:560px;">
+  <div class="card card-p">
+    <h3 class="serif" style="font-size:1rem;margin-bottom:1rem;display:flex;align-items:center;gap:.5rem;">
+      <i data-lucide="{{ 'pencil' if staff_member else 'user-plus' }}" style="width:16px;height:16px;color:var(--navy);"></i>
+      {{ 'Edit Staff Member' if staff_member else 'Add New Staff Member' }}
+    </h3>
+    <form method="POST">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+        <div class="form-group">
+          <label class="form-label">Staff ID *</label>
+          <input type="text" name="staff_id" id="staff_id" required class="form-control"
+                 placeholder="e.g. STF-001" maxlength="20"
+                 value="{{ staff_member.staff_id if staff_member else '' }}"
+                 {{ 'readonly style=background:#f1f5f9;cursor:not-allowed;' if staff_member else '' }}>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Full Name *</label>
+          <input type="text" name="name" id="name" required class="form-control"
+                 placeholder="Dr. Jane Smith"
+                 value="{{ staff_member.name if staff_member else '' }}">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Email Address *</label>
+        <input type="email" name="email" id="email" required class="form-control"
+               placeholder="jane.smith@university.edu"
+               value="{{ staff_member.email if staff_member else '' }}">
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+        <div class="form-group">
+          <label class="form-label">Role *</label>
+          <select name="role_type" id="role_type" required class="form-control">
+            <option value="">Select role…</option>
+            <option value="professor" {{ 'selected' if staff_member and staff_member.role_type == 'professor' else '' }}>Professor</option>
+            <option value="ta" {{ 'selected' if staff_member and staff_member.role_type == 'ta' else '' }}>Teaching Assistant</option>
+            <option value="head_staff" {{ 'selected' if staff_member and staff_member.role_type == 'head_staff' else '' }}>Head of Staff</option>
+            <option value="admin_staff" {{ 'selected' if staff_member and staff_member.role_type == 'admin_staff' else '' }}>Administrative Staff</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Department *</label>
+          <select name="department" id="department" required class="form-control">
+            <option value="">Select department…</option>
+            {% for dep in departments %}
+            <option value="{{ dep }}" {{ 'selected' if staff_member and staff_member.department == dep else '' }}>{{ dep }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Office Hours</label>
+        <input type="text" name="office_hours" class="form-control"
+               placeholder="e.g. Mon & Wed 10:00–12:00"
+               value="{{ staff_member.office_hours if staff_member and staff_member.office_hours else '' }}">
+      </div>
+
+      <hr class="divider">
+      <div style="display:flex;gap:.6rem;">
+        <button type="submit" class="btn btn-gold">
+          <i data-lucide="{{ 'save' if staff_member else 'user-plus' }}" style="width:14px;height:14px;"></i>
+          {{ 'Save Changes' if staff_member else 'Add Staff Member' }}
+        </button>
+        <a href="{{ url_for('staff.directory') }}" class="btn btn-outline">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

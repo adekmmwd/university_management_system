@@ -1,3 +1,4 @@
+import re
 from flask import Blueprint, render_template, session, jsonify, request, redirect, url_for, flash
 from core.database import supabase
 from core.auth import login_required, admin_required, course_coordinator_required, admin_or_head_staff_required
@@ -347,3 +348,182 @@ def get_courses_api(staff_id):
         "courses": courses,
         "count": len(courses)
     }), 200
+
+
+def _valid_email(e: str) -> bool:
+    return bool(re.match(r"^[^@]+@[^@]+\.[^@]+$", (e or "").strip()))
+
+
+def _get_all_departments():
+    """Get departments from the departments table, with staff/student counts."""
+    try:
+        deps = supabase.table("departments").select("*").order("name").execute().data or []
+        for d in deps:
+            sc = supabase.table("staff").select("id", count="exact").eq("department", d["name"]).execute()
+            d["staff_count"] = getattr(sc, "count", 0) or 0
+            stc = supabase.table("students").select("id", count="exact").eq("department", d["name"]).execute()
+            d["student_count"] = getattr(stc, "count", 0) or 0
+        return deps
+    except Exception:
+        return []
+
+
+def _get_department_names():
+    """Get just department names for dropdowns."""
+    try:
+        deps = supabase.table("departments").select("name").order("name").execute().data or []
+        names = [d["name"] for d in deps if d.get("name")]
+        if not names:
+            staff = supabase.table("staff").select("department").execute().data or []
+            for row in staff:
+                dep = (row.get("department") or "").strip()
+                if dep and dep not in names:
+                    names.append(dep)
+        return names
+    except Exception:
+        return ["Computer Science", "Computer Engineering", "Electrical Engineering"]
+
+
+# ── Staff Member CRUD ──
+
+@staff_bp.route("/staff/new", methods=["GET", "POST"])
+@admin_required
+def staff_new():
+    if request.method == "POST":
+        staff_id = (request.form.get("staff_id") or "").strip()
+        name = (request.form.get("name") or "").strip()
+        email = (request.form.get("email") or "").strip()
+        role_type = (request.form.get("role_type") or "").strip()
+        department = (request.form.get("department") or "").strip()
+        office_hours = (request.form.get("office_hours") or "").strip() or None
+
+        errors = []
+        if not staff_id:
+            errors.append("Staff ID is required.")
+        else:
+            resp = supabase.table("staff").select("id").eq("staff_id", staff_id).execute()
+            if getattr(resp, "data", None):
+                errors.append("Staff ID already exists.")
+
+        if not name:
+            errors.append("Name is required.")
+        if not email or not _valid_email(email):
+            errors.append("A valid email address is required.")
+        else:
+            resp = supabase.table("staff").select("id").eq("email", email).execute()
+            if getattr(resp, "data", None):
+                errors.append("Email already in use.")
+
+        if not role_type:
+            errors.append("Role is required.")
+        if not department:
+            errors.append("Department is required.")
+
+        if errors:
+            for e in errors:
+                flash(e, "danger")
+            return render_template("staff/staff_form.html", staff_member=None, departments=_get_department_names())
+
+        data = {
+            "staff_id": staff_id,
+            "name": name,
+            "email": email,
+            "role_type": role_type,
+            "department": department,
+            "office_hours": office_hours,
+        }
+        supabase.table("staff").insert(data).execute()
+        flash(f"Staff member {name} added successfully.", "success")
+        return redirect(url_for("staff.directory"))
+
+    return render_template("staff/staff_form.html", staff_member=None, departments=_get_department_names())
+
+
+@staff_bp.route("/staff/<int:sid>/edit", methods=["GET", "POST"])
+@admin_required
+def staff_edit(sid):
+    resp = supabase.table("staff").select("*").eq("id", sid).limit(1).execute()
+    staff_member = resp.data[0] if getattr(resp, "data", None) else None
+    if not staff_member:
+        flash("Staff member not found.", "danger")
+        return redirect(url_for("staff.directory"))
+
+    if request.method == "POST":
+        name = (request.form.get("name") or "").strip()
+        email = (request.form.get("email") or "").strip()
+        role_type = (request.form.get("role_type") or "").strip()
+        department = (request.form.get("department") or "").strip()
+        office_hours = (request.form.get("office_hours") or "").strip() or None
+
+        errors = []
+        if not name:
+            errors.append("Name is required.")
+        if not email or not _valid_email(email):
+            errors.append("A valid email is required.")
+        else:
+            resp = supabase.table("staff").select("id").eq("email", email).execute()
+            if getattr(resp, "data", None) and resp.data[0]["id"] != sid:
+                errors.append("Email already in use by another staff member.")
+
+        if errors:
+            for e in errors:
+                flash(e, "danger")
+            return render_template("staff/staff_form.html", staff_member=staff_member, departments=_get_department_names())
+
+        update_data = {
+            "name": name,
+            "email": email,
+            "role_type": role_type,
+            "department": department,
+            "office_hours": office_hours,
+        }
+        supabase.table("staff").update(update_data).eq("id", sid).execute()
+        flash("Staff member updated successfully.", "success")
+        return redirect(url_for("staff.directory"))
+
+    return render_template("staff/staff_form.html", staff_member=staff_member, departments=_get_department_names())
+
+
+# ── Department Management ──
+
+@staff_bp.route("/admin/departments")
+@admin_required
+def manage_departments():
+    departments = _get_all_departments()
+    return render_template("staff/departments.html", departments=departments)
+
+
+@staff_bp.route("/admin/departments/create", methods=["POST"])
+@admin_required
+def create_department():
+    name = (request.form.get("name") or "").strip()
+    code = (request.form.get("code") or "").strip().upper() or None
+    head = (request.form.get("head") or "").strip() or None
+
+    if not name:
+        flash("Department name is required.", "danger")
+        return redirect(url_for("staff.manage_departments"))
+
+    existing = supabase.table("departments").select("id").eq("name", name).execute()
+    if getattr(existing, "data", None):
+        flash(f"Department '{name}' already exists.", "warning")
+        return redirect(url_for("staff.manage_departments"))
+
+    data = {"name": name}
+    if code:
+        data["code"] = code
+    if head:
+        data["head"] = head
+
+    supabase.table("departments").insert(data).execute()
+    flash(f"Department '{name}' created successfully.", "success")
+    return redirect(url_for("staff.manage_departments"))
+
+
+@staff_bp.route("/admin/departments/delete/<int:dept_id>", methods=["POST"])
+@admin_required
+def delete_department(dept_id):
+    supabase.table("departments").delete().eq("id", dept_id).execute()
+    flash("Department deleted.", "success")
+    return redirect(url_for("staff.manage_departments"))
+

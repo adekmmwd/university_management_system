@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}Departments{% endblock %}
+{% block page_title %}Department Management{% endblock %}
+{% block breadcrumb %}Admin · Departments{% endblock %}
+
+{% block content %}
+<div style="display:grid;grid-template-columns:380px 1fr;gap:1.5rem;max-width:1000px;">
+  <!-- Add Department Card -->
+  <div>
+    <div class="card card-p">
+      <h3 class="serif" style="font-size:1rem;margin-bottom:1rem;display:flex;align-items:center;gap:.5rem;">
+        <i data-lucide="plus-circle" style="width:16px;height:16px;color:var(--gold);"></i>Add Department
+      </h3>
+      <form method="POST" action="{{ url_for('staff.create_department') }}">
+        <div class="form-group">
+          <label class="form-label">Department Name *</label>
+          <input type="text" name="name" required class="form-control"
+                 placeholder="e.g. Computer Science" maxlength="100" id="dept-name-input">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Code</label>
+          <input type="text" name="code" class="form-control"
+                 placeholder="e.g. CS" maxlength="10" style="text-transform:uppercase;">
+          <p style="font-size:.7rem;color:var(--muted);margin-top:.25rem;">Optional short code for the department.</p>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Head of Department</label>
+          <input type="text" name="head" class="form-control"
+                 placeholder="e.g. Dr. Ahmed Hassan" maxlength="100">
+        </div>
+        <button type="submit" class="btn btn-gold" style="width:100%;justify-content:center;">
+          <i data-lucide="building" style="width:14px;height:14px;"></i>Add Department
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Department List -->
+  <div>
+    <div class="section-header" style="margin-bottom:.75rem;">
+      <p class="page-sub">{{ departments|length }} department(s) registered</p>
+    </div>
+
+    {% if departments %}
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:.75rem;">
+      {% for d in departments %}
+      <div class="card card-p" style="position:relative;">
+        <div style="display:flex;align-items:center;gap:.65rem;margin-bottom:.5rem;">
+          <div style="width:38px;height:38px;background:var(--navy);color:#fff;border-radius:.55rem;
+            display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:700;flex-shrink:0;">
+            {{ d.code[:2]|upper if d.code else d.name[0]|upper }}
+          </div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-weight:600;font-size:.9rem;">{{ d.name }}</div>
+            {% if d.code %}
+            <span class="badge badge-navy" style="margin-top:.15rem;">{{ d.code }}</span>
+            {% endif %}
+          </div>
+        </div>
+        {% if d.head %}
+        <div style="display:flex;align-items:center;gap:.35rem;font-size:.76rem;color:var(--muted);">
+          <i data-lucide="user" style="width:11px;height:11px;"></i>{{ d.head }}
+        </div>
+        {% endif %}
+        <div style="display:flex;align-items:center;gap:.35rem;font-size:.72rem;color:#94a3b8;margin-top:.35rem;">
+          <i data-lucide="users" style="width:11px;height:11px;"></i>{{ d.staff_count }} staff · {{ d.student_count }} students
+        </div>
+
+        <div style="display:flex;gap:.4rem;margin-top:.65rem;padding-top:.55rem;border-top:1px solid var(--border);">
+          <form method="POST" action="{{ url_for('staff.delete_department', dept_id=d.id) }}"
+                onsubmit="return confirm('Delete department {{ d.name }}? This will NOT delete staff or students in it.');">
+            <button type="submit" class="btn btn-danger btn-xs">
+              <i data-lucide="trash-2" style="width:11px;height:11px;"></i>Delete
+            </button>
+          </form>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="card card-p">
+      <div class="empty-state">
+        <i data-lucide="building" style="width:34px;height:34px;" class="ic"></i>
+        <p style="font-size:.85rem;color:var(--muted);">No departments registered yet.</p>
+        <p style="font-size:.75rem;color:#94a3b8;margin-top:.35rem;">Use the form to create your first department.</p>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

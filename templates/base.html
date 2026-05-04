@@ -205,6 +205,11 @@
           <a href="{{ url_for('staff.directory') }}" class="nav-link {% if request.endpoint == 'staff.directory' %}active{% endif %}">
             <i data-lucide="briefcase" class="ic"></i>Staff
           </a>
+          {% if session.get('role') == 'admin' %}
+          <a href="{{ url_for('staff.manage_departments') }}" class="nav-link {% if request.endpoint == 'staff.manage_departments' %}active{% endif %}">
+            <i data-lucide="building" class="ic"></i>Departments
+          </a>
+          {% endif %}
 
           <div class="nav-section" style="margin-top:.75rem;">Community</div>
           <a href="{{ url_for('community.events_feed') }}" class="nav-link {% if request.endpoint == 'community.events_feed' %}active{% endif %}">

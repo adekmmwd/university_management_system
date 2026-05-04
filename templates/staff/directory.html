@@ -7,6 +7,11 @@
 {% block content %}
 <div class="section-header">
   <p class="page-sub">{{ staff|length }} staff member(s)</p>
+  {% if session.get('role') == 'admin' %}
+  <a href="{{ url_for('staff.staff_new') }}" class="btn btn-gold">
+    <i data-lucide="user-plus" style="width:14px;height:14px;"></i>Add Staff Member
+  </a>
+  {% endif %}
 </div>
 
 {% if staff %}
