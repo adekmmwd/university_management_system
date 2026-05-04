@@ -6,10 +6,13 @@ import uuid
 import urllib.request
 import urllib.error
 from datetime import datetime, timedelta, timezone
+from dotenv import load_dotenv
 
 from flask import Blueprint, request, session, redirect, url_for, flash, render_template
 from werkzeug.security import generate_password_hash, check_password_hash
 from core.database import supabase
+
+load_dotenv()
 
 auth_bp = Blueprint("auth", __name__)
 
