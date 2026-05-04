@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}My Sections{% endblock %}
+{% block page_title %}My Section Assignments{% endblock %}
+{% block breadcrumb %}Teaching Assistant · Assigned Sections{% endblock %}
+
+{% block content %}
+<div class="section-header">
+  <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+    <a href="{{ url_for('staff.profile') }}" class="btn btn-outline btn-sm">
+      <i data-lucide="arrow-left" style="width:13px;height:13px;"></i>Dashboard
+    </a>
+  </div>
+</div>
+
+{% if sections %}
+<div style="display:grid;gap:1.25rem;max-width:900px;">
+  {% for section in sections %}
+  <div class="card card-p">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:1rem;">
+      <div>
+        <span style="font-family:monospace;font-weight:700;color:var(--navy);font-size:.95rem;">{{ section.course_code }}</span>
+        <h3 style="font-weight:600;font-size:1.1rem;margin-top:.3rem;">{{ section.course_title }}</h3>
+        <div style="font-size:.82rem;color:var(--muted);margin-top:.4rem;">
+          <i data-lucide="layers" style="width:13px;height:13px;vertical-align:middle;margin-right:.3rem;"></i>
+          Section {{ section.section_number }}
+        </div>
+      </div>
+    </div>
+
+    <div style="background:#f8fafc;border:1px solid var(--border);border-radius:.55rem;padding:1rem;margin-top:.75rem;">
+      <label style="display:block;font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;font-weight:700;color:var(--muted);margin-bottom:.5rem;">
+        <i data-lucide="clipboard" style="width:13px;height:13px;vertical-align:middle;margin-right:.3rem;"></i>Your Responsibilities
+      </label>
+      
+      <form method="POST" action="{{ url_for('curriculum.update_ta_responsibility', section_id=section.id) }}">
+        <textarea
+          name="responsibility"
+          placeholder="Describe your responsibilities for this section (max 500 characters)..."
+          style="width:100%;min-height:120px;padding:.75rem;border:1px solid var(--border);border-radius:.45rem;font-size:.85rem;font-family:inherit;resize:vertical;box-sizing:border-box;"
+          maxlength="500"
+        >{{ section.responsibility or '' }}</textarea>
+        
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:.6rem;">
+          <small style="color:var(--muted);font-size:.75rem;">
+            <span id="char-count">{{ (section.responsibility or '')|length }}</span>/500 characters
+          </small>
+          <button type="submit" class="btn btn-primary btn-sm">
+            <i data-lucide="save" style="width:12px;height:12px;"></i>Save Changes
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <div style="font-size:.75rem;color:var(--muted);margin-top:.75rem;">
+      <i data-lucide="clock" style="width:12px;height:12px;vertical-align:middle;margin-right:.3rem;"></i>
+      Last updated: {{ section.updated_at|default('Never') }}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<script>
+  document.querySelectorAll('textarea[name="responsibility"]').forEach(textarea => {
+    const updateCount = () => {
+      const form = textarea.closest('form');
+      const charCount = form.querySelector('#char-count');
+      if (charCount) {
+        charCount.textContent = textarea.value.length;
+      }
+    };
+    
+    textarea.addEventListener('input', updateCount);
+  });
+</script>
+{% else %}
+<div class="card card-p" style="grid-column:1/-1;">
+  <div class="empty-state">
+    <i data-lucide="inbox" style="width:34px;height:34px;" class="ic"></i>
+    <p style="font-size:.85rem;color:var(--muted);">You have no assigned sections yet.</p>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
