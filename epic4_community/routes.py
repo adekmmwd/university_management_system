@@ -112,6 +112,7 @@ def student_new():
         student_id = (request.form.get("student_id") or "").strip()
         name = (request.form.get("name") or "").strip()
         email = (request.form.get("email") or "").strip()
+        username = (request.form.get("username") or "").strip()
         department = (request.form.get("department") or "").strip()
         year = (request.form.get("year") or "").strip()
 
@@ -133,10 +134,27 @@ def student_new():
             if getattr(resp, "data", None):
                 errors.append("Email already exists.")
 
+        if not username:
+            errors.append("Username is required.")
+        else:
+            resp = supabase.table("users").select("id").eq("username", username).execute()
+            if getattr(resp, "data", None):
+                errors.append("Username already exists in the system.")
+
         if errors:
             for e in errors:
                 flash(e, "danger")
             return render_template("community/student_form.html", student=None)
+
+        # Create user record
+        user_data = {
+            "username": username,
+            "password_hash": "INVITED_NOT_SET",
+            "role": "student",
+            "full_name": name,
+        }
+        user_resp = supabase.table("users").insert(user_data).execute()
+        new_user_id = user_resp.data[0]["id"] if getattr(user_resp, "data", None) else None
 
         data = {
             "student_id": student_id,
@@ -146,6 +164,7 @@ def student_new():
             "year": year,
             "status": "active",
             "archived": False,
+            "user_id": new_user_id,
         }
         supabase.table("students").insert(data).execute()
         flash(f"Student {name} added.", "success")
@@ -194,6 +213,23 @@ def student_edit(sid):
     return render_template("community/student_form.html", student=student)
 
 
+@community_bp.route("/students/<int:sid>/delete", methods=["POST"])
+@admin_required
+def student_delete(sid):
+    resp = supabase.table("students").select("user_id").eq("id", sid).limit(1).execute()
+    student = resp.data[0] if getattr(resp, "data", None) else None
+    if not student:
+        flash("Student not found.", "danger")
+        return redirect(url_for("community.students_list"))
+
+    supabase.table("students").delete().eq("id", sid).execute()
+    if student.get("user_id"):
+        supabase.table("users").delete().eq("id", student["user_id"]).execute()
+        
+    flash("Student deleted successfully.", "success")
+    return redirect(url_for("community.students_list"))
+
+
 # API: Create student (JSON)
 @community_bp.route("/api/students", methods=["POST"])
 @admin_required
@@ -202,6 +238,7 @@ def api_create_student():
     student_id = (payload.get("student_id") or "").strip()
     name = (payload.get("name") or "").strip()
     email = (payload.get("email") or "").strip()
+    username = (payload.get("username") or "").strip()
     department = (payload.get("department") or "").strip()
     year = payload.get("year")
 
@@ -223,8 +260,24 @@ def api_create_student():
         if getattr(resp, "data", None):
             errors.append("Email already exists.")
 
+    if not username:
+        errors.append("Username is required.")
+    else:
+        resp = supabase.table("users").select("id").eq("username", username).execute()
+        if getattr(resp, "data", None):
+            errors.append("Username already exists.")
+
     if errors:
         return jsonify({"errors": errors}), 400
+
+    user_data = {
+        "username": username,
+        "password_hash": "INVITED_NOT_SET",
+        "role": "student",
+        "full_name": name,
+    }
+    user_resp = supabase.table("users").insert(user_data).execute()
+    new_user_id = user_resp.data[0]["id"] if getattr(user_resp, "data", None) else None
 
     data = {
         "student_id": student_id,
@@ -234,6 +287,7 @@ def api_create_student():
         "year": year,
         "status": "active",
         "archived": False,
+        "user_id": new_user_id,
     }
     resp = supabase.table("students").insert(data).execute()
     new = resp.data[0] if getattr(resp, "data", None) else None

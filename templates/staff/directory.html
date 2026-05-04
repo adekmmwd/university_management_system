@@ -61,6 +61,14 @@
 
     {% if session.get('role') == 'admin' %}
     <div style="display:flex;gap:.4rem;margin-top:.85rem;padding-top:.75rem;border-top:1px solid var(--border);">
+      <a href="{{ url_for('staff.staff_edit', sid=s.id) }}" class="btn btn-outline btn-xs">
+        <i data-lucide="pencil" style="width:11px;height:11px;"></i>Edit
+      </a>
+      <form method="POST" action="{{ url_for('staff.staff_delete', sid=s.id) }}" onsubmit="return confirm('Are you sure you want to delete this staff member?');">
+        <button type="submit" class="btn btn-danger btn-xs">
+          <i data-lucide="trash-2" style="width:11px;height:11px;"></i>Delete
+        </button>
+      </form>
       <form method="POST" action="{{ url_for('auth.send_invitation') }}">
         <input type="hidden" name="target_type" value="staff">
         <input type="hidden" name="target_id" value="{{ s.id }}">

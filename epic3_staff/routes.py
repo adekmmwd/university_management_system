@@ -393,6 +393,7 @@ def staff_new():
         staff_id = (request.form.get("staff_id") or "").strip()
         name = (request.form.get("name") or "").strip()
         email = (request.form.get("email") or "").strip()
+        username = (request.form.get("username") or "").strip()
         role_type = (request.form.get("role_type") or "").strip()
         department = (request.form.get("department") or "").strip()
         office_hours = (request.form.get("office_hours") or "").strip() or None
@@ -414,6 +415,13 @@ def staff_new():
             if getattr(resp, "data", None):
                 errors.append("Email already in use.")
 
+        if not username:
+            errors.append("Username is required.")
+        else:
+            resp = supabase.table("users").select("id").eq("username", username).execute()
+            if getattr(resp, "data", None):
+                errors.append("Username already exists.")
+
         if not role_type:
             errors.append("Role is required.")
         if not department:
@@ -424,6 +432,16 @@ def staff_new():
                 flash(e, "danger")
             return render_template("staff/staff_form.html", staff_member=None, departments=_get_department_names())
 
+        # Create user record
+        user_data = {
+            "username": username,
+            "password_hash": "INVITED_NOT_SET",
+            "role": role_type,
+            "full_name": name,
+        }
+        user_resp = supabase.table("users").insert(user_data).execute()
+        new_user_id = user_resp.data[0]["id"] if getattr(user_resp, "data", None) else None
+
         data = {
             "staff_id": staff_id,
             "name": name,
@@ -431,6 +449,7 @@ def staff_new():
             "role_type": role_type,
             "department": department,
             "office_hours": office_hours,
+            "user_id": new_user_id,
         }
         supabase.table("staff").insert(data).execute()
         flash(f"Staff member {name} added successfully.", "success")
@@ -482,6 +501,23 @@ def staff_edit(sid):
         return redirect(url_for("staff.directory"))
 
     return render_template("staff/staff_form.html", staff_member=staff_member, departments=_get_department_names())
+
+
+@staff_bp.route("/staff/<int:sid>/delete", methods=["POST"])
+@admin_required
+def staff_delete(sid):
+    resp = supabase.table("staff").select("user_id").eq("id", sid).limit(1).execute()
+    staff_member = resp.data[0] if getattr(resp, "data", None) else None
+    if not staff_member:
+        flash("Staff member not found.", "danger")
+        return redirect(url_for("staff.directory"))
+
+    supabase.table("staff").delete().eq("id", sid).execute()
+    if staff_member.get("user_id"):
+        supabase.table("users").delete().eq("id", staff_member["user_id"]).execute()
+        
+    flash("Staff member deleted successfully.", "success")
+    return redirect(url_for("staff.directory"))
 
 
 # ── Department Management ──
