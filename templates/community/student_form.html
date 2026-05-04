@@ -14,12 +14,12 @@
         <input type="text" name="student_id" required class="form-control" placeholder="e.g. 2300328" maxlength="20">
         <div style="font-size:.72rem;color:var(--muted);margin-top:.3rem;">Must be a unique 7-digit number.</div>
       </div>
+      {% endif %}
       <div class="form-group">
         <label class="form-label">Username *</label>
-        <input type="text" name="username" required class="form-control" placeholder="e.g. jdoe23">
+        <input type="text" name="username" required class="form-control" placeholder="e.g. jdoe23" value="{{ student.username if student else '' }}">
         <div style="font-size:.72rem;color:var(--muted);margin-top:.3rem;">The username for the student to log in.</div>
       </div>
-      {% endif %}
 
       <div class="form-group">
         <label class="form-label">Full Name *</label>
@@ -38,8 +38,7 @@
           <label class="form-label">Department</label>
           <select name="department" class="form-control">
             <option value="">— Select —</option>
-            {% set depts = ['Computer Science','Computer Engineering','Electrical Engineering','Mechanical Engineering','Civil Engineering','Information Systems'] %}
-            {% for d in depts %}
+            {% for d in departments %}
             <option value="{{ d }}" {{ 'selected' if student and student.department == d else '' }}>{{ d }}</option>
             {% endfor %}
           </select>

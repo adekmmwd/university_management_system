@@ -35,14 +35,12 @@
                value="{{ staff_member.email if staff_member else '' }}">
       </div>
       
-      {% if not staff_member %}
       <div class="form-group">
         <label class="form-label">Username *</label>
         <input type="text" name="username" id="username" required class="form-control"
-               placeholder="e.g. jsmith23">
+               placeholder="e.g. jsmith23" value="{{ staff_member.username if staff_member else '' }}">
         <div style="font-size:.72rem;color:var(--muted);margin-top:.3rem;">The username for the staff member to log in.</div>
       </div>
-      {% endif %}
 
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
         <div class="form-group">

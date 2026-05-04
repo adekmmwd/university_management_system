@@ -18,6 +18,15 @@ def _valid_student_id(s: str) -> bool:
     return bool(re.match(r"^\d{7}$", (s or "").strip()))
 
 
+def _get_department_names():
+    try:
+        deps = supabase.table("departments").select("name").order("name").execute().data or []
+        names = [d["name"] for d in deps if d.get("name")]
+        return names
+    except Exception:
+        return []
+
+
 def _valid_email(e: str) -> bool:
     return bool(re.match(r"^[^@]+@[^@]+\.[^@]+$", (e or "").strip()))
 
@@ -144,7 +153,7 @@ def student_new():
         if errors:
             for e in errors:
                 flash(e, "danger")
-            return render_template("community/student_form.html", student=None)
+            return render_template("community/student_form.html", student=None, departments=_get_department_names())
 
         # Create user record
         user_data = {
@@ -170,7 +179,7 @@ def student_new():
         flash(f"Student {name} added.", "success")
         return redirect(url_for("community.students_list"))
 
-    return render_template("community/student_form.html", student=None)
+    return render_template("community/student_form.html", student=None, departments=_get_department_names())
 
 
 # UMS-9: Edit Student (form)
@@ -183,9 +192,17 @@ def student_edit(sid):
         flash("Student not found.", "danger")
         return redirect(url_for("community.students_list"))
 
+    if student.get("user_id"):
+        u_resp = supabase.table("users").select("username").eq("id", student["user_id"]).execute()
+        if getattr(u_resp, "data", None):
+            student["username"] = u_resp.data[0]["username"]
+
+    deps = _get_department_names()
+
     if request.method == "POST":
         name = (request.form.get("name") or "").strip()
         email = (request.form.get("email") or "").strip()
+        username = (request.form.get("username") or "").strip()
         department = (request.form.get("department") or "").strip()
         year = (request.form.get("year") or "").strip()
 
@@ -200,17 +217,32 @@ def student_edit(sid):
             if getattr(resp, "data", None) and resp.data[0]["id"] != sid:
                 errors.append("Email already in use by another student.")
 
+        if not username:
+            errors.append("Username is required.")
+        else:
+            if student.get("user_id"):
+                u_resp = supabase.table("users").select("id").eq("username", username).execute()
+                if getattr(u_resp, "data", None) and u_resp.data[0]["id"] != student["user_id"]:
+                    errors.append("Username already in use by another user.")
+            else:
+                u_resp = supabase.table("users").select("id").eq("username", username).execute()
+                if getattr(u_resp, "data", None):
+                    errors.append("Username already in use by another user.")
+
         if errors:
             for e in errors:
                 flash(e, "danger")
-            return render_template("community/student_form.html", student=student)
+            return render_template("community/student_form.html", student=student, departments=deps)
+
+        if student.get("user_id"):
+            supabase.table("users").update({"username": username}).eq("id", student["user_id"]).execute()
 
         update_data = {"name": name, "email": email, "department": department, "year": year}
         supabase.table("students").update(update_data).eq("id", sid).execute()
         flash("Student updated successfully.", "success")
         return redirect(url_for("community.students_list"))
 
-    return render_template("community/student_form.html", student=student)
+    return render_template("community/student_form.html", student=student, departments=deps)
 
 
 @community_bp.route("/students/<int:sid>/delete", methods=["POST"])

@@ -467,9 +467,15 @@ def staff_edit(sid):
         flash("Staff member not found.", "danger")
         return redirect(url_for("staff.directory"))
 
+    if staff_member.get("user_id"):
+        u_resp = supabase.table("users").select("username").eq("id", staff_member["user_id"]).execute()
+        if getattr(u_resp, "data", None):
+            staff_member["username"] = u_resp.data[0]["username"]
+
     if request.method == "POST":
         name = (request.form.get("name") or "").strip()
         email = (request.form.get("email") or "").strip()
+        username = (request.form.get("username") or "").strip()
         role_type = (request.form.get("role_type") or "").strip()
         department = (request.form.get("department") or "").strip()
         office_hours = (request.form.get("office_hours") or "").strip() or None
@@ -484,10 +490,25 @@ def staff_edit(sid):
             if getattr(resp, "data", None) and resp.data[0]["id"] != sid:
                 errors.append("Email already in use by another staff member.")
 
+        if not username:
+            errors.append("Username is required.")
+        else:
+            if staff_member.get("user_id"):
+                u_resp = supabase.table("users").select("id").eq("username", username).execute()
+                if getattr(u_resp, "data", None) and u_resp.data[0]["id"] != staff_member["user_id"]:
+                    errors.append("Username already in use by another user.")
+            else:
+                u_resp = supabase.table("users").select("id").eq("username", username).execute()
+                if getattr(u_resp, "data", None):
+                    errors.append("Username already in use by another user.")
+
         if errors:
             for e in errors:
                 flash(e, "danger")
             return render_template("staff/staff_form.html", staff_member=staff_member, departments=_get_department_names())
+
+        if staff_member.get("user_id"):
+            supabase.table("users").update({"username": username}).eq("id", staff_member["user_id"]).execute()
 
         update_data = {
             "name": name,
