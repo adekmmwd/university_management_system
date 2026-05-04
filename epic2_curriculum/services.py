@@ -188,3 +188,141 @@ def update_course(
         return _normalize_course_record(course) if course else None
     except Exception:
         return None
+
+
+# ============================================================================
+# Feature 1: TA Responsibility Update
+# ============================================================================
+
+
+def get_ta_sections(staff_uuid: str) -> list[dict[str, Any]]:
+    """Get all sections assigned to a TA.
+
+    Args:
+        staff_uuid: The TA's UUID from the staff table.
+
+    Returns:
+        A list of section dicts with course info and responsibility field.
+    """
+    try:
+        resp = supabase.rpc("get_ta_sections", {"p_ta_uuid": staff_uuid}).execute()
+        return resp.data if getattr(resp, "data", None) else []
+    except Exception as e:
+        print(f"Error retrieving TA sections for {staff_uuid}: {e}")
+        return []
+
+
+def update_section_responsibility(
+    section_id: str,
+    responsibility: Optional[str] = None,
+) -> Optional[dict[str, Any]]:
+    """Update the responsibility field for a section.
+
+    Args:
+        section_id: The section UUID.
+        responsibility: The responsibility text (max 500 chars, or None/empty allowed).
+
+    Returns:
+        Updated section record or None on error.
+    """
+    try:
+        # Validate responsibility length
+        if responsibility is not None and len(responsibility) > 500:
+            raise ValueError("Responsibility must be max 500 characters")
+
+        update_data: dict[str, Any] = {}
+        if responsibility is not None:
+            update_data["responsibility"] = responsibility
+
+        if not update_data:
+            return None
+
+        resp = (
+            supabase.table("sections")
+            .update(update_data)
+            .eq("id", section_id)
+            .execute()
+        )
+        return resp.data[0] if getattr(resp, "data", None) else None
+    except Exception as e:
+        print(f"Error updating section responsibility: {e}")
+        return None
+
+
+# ============================================================================
+# Feature 2: Course Deactivation / Deletion
+# ============================================================================
+
+
+def deactivate_course(course_id: str) -> Optional[dict[str, Any]]:
+    """Mark a course as Inactive.
+
+    Args:
+        course_id: The course UUID.
+
+    Returns:
+        Updated course record or None on error.
+    """
+    try:
+        resp = (
+            supabase.table("courses")
+            .update({"status": "Inactive"})
+            .eq("id", course_id)
+            .execute()
+        )
+        course = resp.data[0] if getattr(resp, "data", None) else None
+        return _normalize_course_record(course) if course else None
+    except Exception as e:
+        print(f"Error deactivating course {course_id}: {e}")
+        return None
+
+
+def can_delete_course(course_id: str) -> bool:
+    """Check if a course can be deleted (no enrolled students).
+
+    Args:
+        course_id: The course UUID.
+
+    Returns:
+        True if course can be deleted, False otherwise.
+    """
+    try:
+        has_students = supabase.rpc(
+            "course_has_enrolled_students",
+            {"p_course_id": course_id},
+        ).execute()
+        
+        data = getattr(has_students, "data", None)
+        # data is typically a single boolean value or a list with a boolean
+        if isinstance(data, list) and data:
+            return not data[0]
+        if data is None:
+            return False
+        return not data
+    except Exception as e:
+        print(f"Error checking if course can be deleted: {e}")
+        return False
+
+
+def delete_course(course_id: str) -> bool:
+    """Delete a course if no students are enrolled.
+
+    Args:
+        course_id: The course UUID.
+
+    Returns:
+        True if deleted successfully, False otherwise.
+    """
+    try:
+        # Check if course has enrolled students
+        if not can_delete_course(course_id):
+            raise RuntimeError("Cannot delete course with enrolled students")
+
+        # Delete the course
+        resp = supabase.table("courses").delete().eq("id", course_id).execute()
+        
+        # Check if delete was successful
+        return resp.data == [] or getattr(resp, "count", 0) > 0
+    except Exception as e:
+        print(f"Error deleting course {course_id}: {e}")
+        return False

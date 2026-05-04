@@ -18,6 +18,24 @@
 </div>
 {% endif %}
 
+{# ── TA Quick Actions ── #}
+{% if role == 'ta' %}
+<div style="display:flex;flex-wrap:wrap;gap:.6rem;margin-bottom:1.25rem;">
+  <a href="{{ url_for('curriculum.view_ta_sections') }}" class="btn btn-primary">
+    <i data-lucide="layers" style="width:14px;height:14px;"></i>My Section Assignments
+  </a>
+</div>
+{% endif %}
+
+{# ── Course Coordinator Quick Actions ── #}
+{% if role == 'course_coordinator' %}
+<div style="display:flex;flex-wrap:wrap;gap:.6rem;margin-bottom:1.25rem;">
+  <a href="{{ url_for('curriculum.courses_list') }}" class="btn btn-primary">
+    <i data-lucide="book" style="width:14px;height:14px;"></i>Manage Course Catalog
+  </a>
+</div>
+{% endif %}
+
 {# ── Pinned Announcements ── #}
 {% if pinned_announcements %}
 <div style="margin-bottom:1.25rem;background:#fffbeb;border-left:4px solid var(--gold);border-radius:.6rem;padding:1.1rem 1.4rem;">
