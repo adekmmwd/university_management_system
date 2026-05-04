@@ -1,444 +1,339 @@
-{% extends "base.html" %} {% block content %}
-<h1 class="text-3xl font-bold mb-4">Personal Dashboard</h1>
+{% extends "base.html" %}
 
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Personal Dashboard{% endblock %}
+{% block breadcrumb %}Welcome back{% endblock %}
+
+{% block content %}
+
+{# ── Admin Quick Actions ── #}
 {% if role in ['admin', 'head_staff'] %}
-<div class="mb-6 flex flex-wrap items-center gap-3">
-  <a
-    href="{{ url_for('staff.new_announcement') }}"
-    class="inline-flex items-center gap-2 px-4 py-2 bg-amber-500 text-white rounded-lg font-bold hover:bg-amber-600"
-  >
-    Post Announcement
+<div style="display:flex;flex-wrap:wrap;gap:.6rem;margin-bottom:1.25rem;">
+  <a href="{{ url_for('staff.new_announcement') }}" class="btn btn-gold">
+    <i data-lucide="megaphone" style="width:14px;height:14px;"></i>Post Announcement
   </a>
-  <a
-    href="{{ url_for('staff.manage_announcements') }}"
-    class="inline-flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-lg font-bold hover:bg-slate-700"
-  >
-    Manage Announcements
+  <a href="{{ url_for('staff.manage_announcements') }}" class="btn btn-primary">
+    <i data-lucide="settings" style="width:14px;height:14px;"></i>Manage Announcements
   </a>
-</div>
-{% endif %} {% if not pinned_announcements %}
-<div
-  class="mb-6 bg-white p-6 rounded-lg shadow-sm border border-slate-200 text-center text-slate-500"
->
-  No new updates at this time.
-</div>
-{% endif %} {% if pinned_announcements %}
-<div
-  class="mb-6 bg-amber-50 border-l-4 border-amber-400 p-5 rounded-lg shadow-sm"
->
-  <div class="flex items-start justify-between gap-4">
-    <div>
-      <h2 class="text-xl font-bold text-slate-900">Pinned Announcement</h2>
-      <p class="text-slate-600 mt-1">Important updates for all users.</p>
-    </div>
-    <span class="text-sm font-bold uppercase text-amber-700">Pinned</span>
-  </div>
-  <div class="mt-5 space-y-4">
-    {% for announcement in pinned_announcements %}
-    <div class="rounded-lg bg-white p-4 border border-amber-100 shadow-sm">
-      <h3 class="text-lg font-bold text-slate-900">{{ announcement.title }}</h3>
-      <p class="text-slate-600 mt-2 whitespace-pre-line">
-        {{ announcement.content }}
-      </p>
-      <p class="text-slate-500 text-sm mt-3">
-        Posted {{ announcement.created_at | default('') }}
-      </p>
-    </div>
-    {% endfor %}
-  </div>
-</div>
-{% endif %} {% set is_coordinator = (role == 'course_coordinator') %} {% if
-is_coordinator %}
-<div class="mb-6 flex items-center gap-2">
-  <button
-    id="tab-overview"
-    type="button"
-    class="px-4 py-2 rounded-lg font-bold text-sm bg-slate-900 text-white"
-  >
-    Overview
-  </button>
-  <button
-    id="tab-add-course"
-    type="button"
-    class="px-4 py-2 rounded-lg font-bold text-sm bg-white text-slate-700 border border-slate-200 hover:bg-slate-50"
-  >
-    Add Course
-  </button>
 </div>
 {% endif %}
 
-<div id="panel-overview" class="grid grid-cols-1 gap-6">
-  <!-- User Profile Card -->
-  <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
-    <div class="flex items-center gap-4 border-b pb-4 mb-4">
-      <div
-        class="w-16 h-16 bg-slate-900 text-white rounded-full flex items-center justify-center text-2xl font-bold"
-      >
-        {{ user.full_name[0] | upper }}
+{# ── Pinned Announcements ── #}
+{% if pinned_announcements %}
+<div style="margin-bottom:1.25rem;background:#fffbeb;border-left:4px solid var(--gold);border-radius:.6rem;padding:1.1rem 1.4rem;">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;">
+    <h3 class="serif" style="font-size:1rem;display:flex;align-items:center;gap:.5rem;">
+      <i data-lucide="pin" style="width:14px;height:14px;color:var(--gold);"></i>Pinned Announcements
+    </h3>
+    <span class="badge badge-gold">Pinned</span>
+  </div>
+  {% for announcement in pinned_announcements %}
+  <div style="background:#fff;border:1px solid #fef3c7;border-radius:.55rem;padding:.8rem 1rem;margin-bottom:.5rem;">
+    <div style="font-weight:600;font-size:.87rem;color:var(--text);">{{ announcement.title }}</div>
+    <div style="font-size:.77rem;color:var(--muted);margin-top:.2rem;white-space:pre-line;">{{ (announcement.content or '')[:200] }}{{ '…' if (announcement.content or '')|length > 200 else '' }}</div>
+    <div style="font-size:.68rem;color:#94a3b8;margin-top:.4rem;">Posted {{ announcement.created_at | default('') }}</div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card card-p" style="margin-bottom:1.25rem;text-align:center;">
+  <i data-lucide="bell-off" style="width:24px;height:24px;opacity:.2;display:block;margin:0 auto .5rem;"></i>
+  <p style="font-size:.82rem;color:var(--muted);">No new updates at this time.</p>
+</div>
+{% endif %}
+
+{# ── Tabs for Coordinator ── #}
+{% set is_coordinator = (role == 'course_coordinator') %}
+{% set show_add_course = (role in ['admin', 'course_coordinator']) %}
+
+{% if show_add_course %}
+<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:1.25rem;">
+  <button id="tab-overview" type="button" class="btn btn-primary">Overview</button>
+  <button id="tab-add-course" type="button" class="btn btn-outline">Add Course</button>
+</div>
+{% endif %}
+
+{# ── Overview Panel ── #}
+<div id="panel-overview" style="display:grid;grid-template-columns:300px 1fr;gap:1.5rem;max-width:900px;">
+  <!-- Profile Card -->
+  <div>
+    <div class="card card-p" style="text-align:center;">
+      <div style="width:72px;height:72px;background:var(--navy);color:#fff;border-radius:50%;
+        display:flex;align-items:center;justify-content:center;font-size:2rem;font-weight:700;
+        margin:0 auto .85rem;font-family:'Fraunces',serif;">{{ user.full_name[0]|upper if user.full_name else 'U' }}</div>
+      <div style="font-family:'Fraunces',serif;font-size:1.25rem;">{{ user.full_name or user.username }}</div>
+      <div style="display:inline-block;background:var(--navy);color:#fff;
+        font-size:.72rem;font-weight:700;padding:.25rem .75rem;border-radius:99px;
+        text-transform:capitalize;margin-top:.4rem;">{{ role }}</div>
+      <hr class="divider">
+      <div style="text-align:left;">
+        <div style="display:flex;align-items:flex-start;gap:.75rem;padding:.65rem 0;border-bottom:1px solid var(--border);">
+          <i data-lucide="user" style="width:15px;height:15px;color:var(--muted);margin-top:.1rem;flex-shrink:0;"></i>
+          <div>
+            <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;font-weight:700;color:var(--muted);">Username</div>
+            <div style="font-size:.88rem;margin-top:.1rem;">{{ user.username }}</div>
+          </div>
+        </div>
+
+        {% if extra %}
+          {% if role == 'student' %}
+          <div style="display:flex;align-items:flex-start;gap:.75rem;padding:.65rem 0;border-bottom:1px solid var(--border);">
+            <i data-lucide="hash" style="width:15px;height:15px;color:var(--muted);margin-top:.1rem;flex-shrink:0;"></i>
+            <div>
+              <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;font-weight:700;color:var(--muted);">Student ID</div>
+              <div style="font-size:.88rem;margin-top:.1rem;">{{ extra.student_id }}</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:.75rem;padding:.65rem 0;border-bottom:1px solid var(--border);">
+            <i data-lucide="building" style="width:15px;height:15px;color:var(--muted);margin-top:.1rem;flex-shrink:0;"></i>
+            <div>
+              <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;font-weight:700;color:var(--muted);">Major</div>
+              <div style="font-size:.88rem;margin-top:.1rem;">{{ extra.department }}{% if extra.year %} (Year {{ extra.year }}){% endif %}</div>
+            </div>
+          </div>
+          {% else %}
+          <div style="display:flex;align-items:flex-start;gap:.75rem;padding:.65rem 0;border-bottom:1px solid var(--border);">
+            <i data-lucide="hash" style="width:15px;height:15px;color:var(--muted);margin-top:.1rem;flex-shrink:0;"></i>
+            <div>
+              <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;font-weight:700;color:var(--muted);">Staff ID</div>
+              <div style="font-size:.88rem;margin-top:.1rem;">{{ extra.staff_id }}</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:.75rem;padding:.65rem 0;border-bottom:1px solid var(--border);">
+            <i data-lucide="building" style="width:15px;height:15px;color:var(--muted);margin-top:.1rem;flex-shrink:0;"></i>
+            <div>
+              <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;font-weight:700;color:var(--muted);">Department</div>
+              <div style="font-size:.88rem;margin-top:.1rem;">{{ extra.department or 'Not set' }}</div>
+            </div>
+          </div>
+          {% if extra.office_hours %}
+          <div style="display:flex;align-items:flex-start;gap:.75rem;padding:.65rem 0;border-bottom:1px solid var(--border);">
+            <i data-lucide="clock" style="width:15px;height:15px;color:var(--muted);margin-top:.1rem;flex-shrink:0;"></i>
+            <div>
+              <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;font-weight:700;color:var(--muted);">Office Hours</div>
+              <div style="font-size:.88rem;margin-top:.1rem;">{{ extra.office_hours }}</div>
+            </div>
+          </div>
+          {% endif %}
+          {% endif %}
+        {% else %}
+        <p style="font-size:.82rem;color:#94a3b8;padding:.75rem 0;font-style:italic;">No extended profile data configured yet.</p>
+        {% endif %}
       </div>
-      <div>
-        <h2 class="text-xl font-bold">{{ user.full_name }}</h2>
-        <span
-          class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full uppercase font-bold"
-          >{{ role }}</span
-        >
-      </div>
-    </div>
-    <div class="space-y-3">
-      <p>
-        <strong class="text-slate-500 text-sm uppercase">Username:</strong>
-        <br />
-        {{ user.username }}
-      </p>
-      {% if extra %} {% if role == 'student' %}
-      <p>
-        <strong class="text-slate-500 text-sm uppercase">Student ID:</strong>
-        <br />
-        {{ extra.student_id }}
-      </p>
-      <p>
-        <strong class="text-slate-500 text-sm uppercase">Major:</strong> <br />
-        {{ extra.department }} (Year {{ extra.year }})
-      </p>
-      {% else %}
-      <p>
-        <strong class="text-slate-500 text-sm uppercase">Staff ID:</strong>
-        <br />
-        {{ extra.staff_id }}
-      </p>
-      <p>
-        <strong class="text-slate-500 text-sm uppercase">Department:</strong>
-        <br />
-        {{ extra.department }}
-      </p>
-      <p>
-        <strong class="text-slate-500 text-sm uppercase">Office Hours:</strong>
-        <br />
-        {{ extra.office_hours }}
-      </p>
-      {% endif %} {% else %}
-      <p class="text-slate-400 italic">
-        No extended profile data configured yet.
-      </p>
-      {% endif %}
     </div>
   </div>
 
-  <!-- Schedule Widget (Student & Staff) -->
-  {% include 'staff/_schedule_widget.html' %}
+  <!-- Right Column: Schedule & Courses -->
+  <div>
+    {% include 'staff/_schedule_widget.html' %}
 
-  <!-- Course Registration (Student Dashboard) -->
-  {% if role == 'student' and extra %}
-  <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
-    <h3 class="text-xl font-bold mb-4">Course Catalog</h3>
-
-    {% if not available_courses %}
-    <p class="text-slate-500">No courses available right now.</p>
-    {% else %}
-    <div class="overflow-x-auto">
-      <table class="w-full text-sm">
-        <thead class="bg-slate-100 border-b border-slate-200">
-          <tr>
-            <th class="text-left px-4 py-3 font-bold text-slate-700">Course</th>
-            <th class="text-left px-4 py-3 font-bold text-slate-700">Title</th>
-            <th class="text-left px-4 py-3 font-bold text-slate-700">Type</th>
-            <th class="text-left px-4 py-3 font-bold text-slate-700">
-              Department
-            </th>
-            <th class="text-left px-4 py-3 font-bold text-slate-700">Seats</th>
-            <th class="text-left px-4 py-3 font-bold text-slate-700">Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for c in available_courses %} {% set can_register =
-          (c.department_match and (not c.is_full) and (not c.already_enrolled))
-          %}
-          <tr class="border-b border-slate-100">
-            <td class="px-4 py-3 font-mono font-bold">{{ c.course_code }}</td>
-            <td class="px-4 py-3">{{ c.title }}</td>
-            <td class="px-4 py-3">
-              <span
-                class="px-2 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700"
-                >{{ c.course_type }}</span
-              >
-            </td>
-            <td class="px-4 py-3">{{ c.department }}</td>
-            <td class="px-4 py-3">{{ c.enrolled_count }}/{{ c.capacity }}</td>
-            <td class="px-4 py-3">
-              <form
-                method="POST"
-                action="{{ url_for('curriculum.register_course', course_id=c.id) }}"
-              >
-                {% if c.already_enrolled %}
-                <button
-                  type="button"
-                  disabled
-                  class="px-3 py-2 rounded-lg font-bold bg-slate-200 text-slate-600 cursor-not-allowed"
-                >
-                  Registered
-                </button>
-                {% elif c.is_full %}
-                <button
-                  type="button"
-                  disabled
-                  class="px-3 py-2 rounded-lg font-bold bg-slate-200 text-slate-600 cursor-not-allowed"
-                >
-                  Full
-                </button>
-                {% elif not c.department_match %}
-                <button
-                  type="button"
-                  disabled
-                  class="px-3 py-2 rounded-lg font-bold bg-slate-200 text-slate-600 cursor-not-allowed"
-                >
-                  Different Dept
-                </button>
-                {% else %}
-                <button
-                  type="submit"
-                  class="px-3 py-2 rounded-lg font-bold bg-amber-500 text-white hover:bg-amber-600"
-                >
-                  Register
-                </button>
-                {% endif %}
-              </form>
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+    {% if role == 'student' and extra %}
+    <div class="card card-p" style="margin-top:1.25rem;">
+      <h3 class="serif" style="font-size:1rem;margin-bottom:.85rem;">
+        <i data-lucide="book-open" style="width:16px;height:16px;color:var(--navy);vertical-align:middle;margin-right:.3rem;"></i>Course Catalog
+      </h3>
+      {% if not available_courses %}
+      <p style="font-size:.82rem;color:var(--muted);">No courses available right now.</p>
+      {% else %}
+      <div class="table-wrap" style="margin-top:.5rem;">
+        <table class="ums-table">
+          <thead>
+            <tr>
+              <th>Course</th>
+              <th>Title</th>
+              <th>Type</th>
+              <th>Department</th>
+              <th>Seats</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for c in available_courses %}
+            <tr>
+              <td><span class="badge badge-navy">{{ c.course_code }}</span></td>
+              <td style="font-weight:500;">{{ c.title }}</td>
+              <td><span class="badge badge-gray">{{ c.course_type }}</span></td>
+              <td>{{ c.department }}</td>
+              <td>{{ c.enrolled_count }}/{{ c.capacity }}</td>
+              <td>
+                <form method="POST" action="{{ url_for('curriculum.register_course', course_id=c.id) }}">
+                  {% if c.already_enrolled %}
+                  <span class="badge badge-green" style="padding:.35rem .7rem;">
+                    <i data-lucide="check-circle" style="width:12px;height:12px;"></i>Enrolled
+                  </span>
+                  {% elif c.is_full %}
+                  <span class="badge badge-red" style="padding:.35rem .7rem;">Full</span>
+                  {% elif not c.department_match %}
+                  <span class="badge badge-gray" style="padding:.35rem .7rem;">Different Dept</span>
+                  {% else %}
+                  <button type="submit" class="btn btn-primary btn-sm">
+                    <i data-lucide="plus-circle" style="width:12px;height:12px;"></i>Register
+                  </button>
+                  {% endif %}
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% endif %}
     </div>
     {% endif %}
   </div>
-  {% endif %}
 </div>
 
-{% if is_coordinator %}
-<div id="panel-add-course" class="hidden">
-  <div
-    class="bg-white p-6 rounded-lg shadow-sm border border-slate-200 max-w-2xl"
-  >
-    <h3 class="text-xl font-bold mb-4">Add New Course</h3>
-    <form
-      method="POST"
-      action="{{ url_for('staff.create_course') }}"
-      class="space-y-4"
-      id="add-course-form"
-    >
-      <div>
-        <label
-          class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2"
-          >Course Code *</label
-        >
-        <input
-          type="text"
-          name="course_code"
-          id="course_code"
-          required
-          class="w-full border-2 border-slate-200 rounded-lg px-4 py-2 focus:outline-none focus:border-slate-900"
-          placeholder="CSE342"
-        />
-        <p
-          id="course_code_error"
-          class="hidden text-sm font-bold text-red-600 mt-2"
-        >
-          Course code is required.
-        </p>
-      </div>
+{# ── Add Course Panel ── #}
+{% if show_add_course %}
+<div id="panel-add-course" style="display:none;">
+  <div style="max-width:520px;">
+    <div class="card card-p">
+      <h3 class="serif" style="font-size:1rem;margin-bottom:1rem;">Add New Course</h3>
+      <form method="POST" action="{{ url_for('staff.create_course') }}" id="add-course-form">
+        <div class="form-group">
+          <label class="form-label">Course Code *</label>
+          <input type="text" name="course_code" id="course_code" required class="form-control"
+                 placeholder="e.g. CSE342" maxlength="20" style="text-transform:uppercase;">
+          <p id="course_code_error" style="display:none;font-size:.75rem;color:#991b1b;margin-top:.3rem;">Course code is required.</p>
+        </div>
 
-      <div>
-        <label
-          class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2"
-          >Course Title *</label
-        >
-        <input
-          type="text"
-          name="title"
-          id="title"
-          required
-          class="w-full border-2 border-slate-200 rounded-lg px-4 py-2 focus:outline-none focus:border-slate-900"
-          placeholder="Agile Software Development"
-        />
-        <p id="title_error" class="hidden text-sm font-bold text-red-600 mt-2">
-          Course title is required.
-        </p>
-      </div>
+        <div class="form-group">
+          <label class="form-label">Course Title *</label>
+          <input type="text" name="title" id="title" required class="form-control"
+                 placeholder="Agile Software Development">
+          <p id="title_error" style="display:none;font-size:.75rem;color:#991b1b;margin-top:.3rem;">Course title is required.</p>
+        </div>
 
-      <div>
-        <label
-          class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2"
-          >Course Description</label
-        >
-        <textarea
-          name="description"
-          id="description"
-          rows="4"
-          class="w-full border-2 border-slate-200 rounded-lg px-4 py-2 focus:outline-none focus:border-slate-900"
-          placeholder="Optional description..."
-        ></textarea>
-      </div>
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <textarea name="description" id="description" rows="3" class="form-control"
+                    placeholder="Brief description…"></textarea>
+        </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label
-            class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2"
-            >Course Type *</label
-          >
-          <select
-            name="course_type"
-            id="course_type"
-            required
-            class="w-full border-2 border-slate-200 rounded-lg px-4 py-2 focus:outline-none focus:border-slate-900 bg-white"
-          >
-            <option value="">Select type...</option>
-            <option value="Core">Core</option>
-            <option value="Elective">Elective</option>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+          <div class="form-group">
+            <label class="form-label">Type *</label>
+            <select name="course_type" id="course_type" required class="form-control">
+              <option value="">Select type...</option>
+              <option value="Core">Core</option>
+              <option value="Elective">Elective</option>
+            </select>
+            <p id="course_type_error" style="display:none;font-size:.75rem;color:#991b1b;margin-top:.3rem;">Course type is required.</p>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Capacity *</label>
+            <input type="number" name="capacity" id="capacity" min="1" value="50" required class="form-control">
+            <p id="capacity_error" style="display:none;font-size:.75rem;color:#991b1b;margin-top:.3rem;">Capacity must be a positive number.</p>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Department *</label>
+          <select name="department" id="department" required class="form-control">
+            <option value="">Select department...</option>
+            {% for dep in departments %}
+            <option value="{{ dep }}">{{ dep }}</option>
+            {% endfor %}
+            {% if not departments %}
+            <option value="Computer Science">Computer Science</option>
+            <option value="Computer Engineering">Computer Engineering</option>
+            <option value="Electrical Engineering">Electrical Engineering</option>
+            <option value="Mechanical Engineering">Mechanical Engineering</option>
+            <option value="Civil Engineering">Civil Engineering</option>
+            <option value="Information Systems">Information Systems</option>
+            {% endif %}
           </select>
-          <p
-            id="course_type_error"
-            class="hidden text-sm font-bold text-red-600 mt-2"
-          >
-            Course type is required.
-          </p>
+          <p id="department_error" style="display:none;font-size:.75rem;color:#991b1b;margin-top:.3rem;">Department is required.</p>
         </div>
-        <div>
-          <label
-            class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2"
-            >Capacity *</label
-          >
-          <input
-            type="number"
-            name="capacity"
-            id="capacity"
-            min="1"
-            value="50"
-            required
-            class="w-full border-2 border-slate-200 rounded-lg px-4 py-2 focus:outline-none focus:border-slate-900"
-          />
-          <p
-            id="capacity_error"
-            class="hidden text-sm font-bold text-red-600 mt-2"
-          >
-            Capacity must be a positive number.
-          </p>
+
+        <hr class="divider">
+        <div style="display:flex;gap:.6rem;">
+          <button type="submit" id="submit_course" class="btn btn-gold">
+            <i data-lucide="book-plus" style="width:14px;height:14px;"></i>Add to Catalog
+          </button>
+          <button type="button" id="cancel-add-course" class="btn btn-outline">Cancel</button>
         </div>
-      </div>
-
-      <div>
-        <label
-          class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2"
-          >Department *</label
-        >
-        <select
-          name="department"
-          id="department"
-          required
-          class="w-full border-2 border-slate-200 rounded-lg px-4 py-2 focus:outline-none focus:border-slate-900 bg-white"
-        >
-          <option value="">Select department...</option>
-          {% for dep in departments %}
-          <option value="{{ dep }}">{{ dep }}</option>
-          {% endfor %}
-        </select>
-        <p
-          id="department_error"
-          class="hidden text-sm font-bold text-red-600 mt-2"
-        >
-          Department is required.
-        </p>
-      </div>
-
-      <button
-        type="submit"
-        id="submit_course"
-        class="w-full bg-amber-500 text-white font-bold py-3 rounded-lg hover:bg-amber-600"
-      >
-        Create Course
-      </button>
-    </form>
+      </form>
+    </div>
   </div>
 </div>
 {% endif %}
 
 <script>
-  // Coordinator tabs + form validation
-  document.addEventListener('DOMContentLoaded', function() {
-      const isCoordinator = "{{ 'true' if is_coordinator else 'false' }}" === "true";
-      if (isCoordinator) {
-          const tabOverview = document.getElementById('tab-overview');
-          const tabAddCourse = document.getElementById('tab-add-course');
-          const panelOverview = document.getElementById('panel-overview');
-          const panelAddCourse = document.getElementById('panel-add-course');
+document.addEventListener('DOMContentLoaded', function() {
+    const showAddCourse = "{{ show_add_course }}" === "True";
+    if (showAddCourse) {
+        const tabOverview = document.getElementById('tab-overview');
+        const tabAddCourse = document.getElementById('tab-add-course');
+        const panelOverview = document.getElementById('panel-overview');
+        const panelAddCourse = document.getElementById('panel-add-course');
+        const cancelBtn = document.getElementById('cancel-add-course');
 
-          function showOverview() {
-              tabOverview.className = 'px-4 py-2 rounded-lg font-bold text-sm bg-slate-900 text-white';
-              tabAddCourse.className = 'px-4 py-2 rounded-lg font-bold text-sm bg-white text-slate-700 border border-slate-200 hover:bg-slate-50';
-              panelOverview.classList.remove('hidden');
-              panelAddCourse.classList.add('hidden');
-          }
+        function showOverviewPanel() {
+            tabOverview.className = 'btn btn-primary';
+            tabAddCourse.className = 'btn btn-outline';
+            panelOverview.style.display = 'grid';
+            panelAddCourse.style.display = 'none';
+        }
 
-          function showAddCourse() {
-              tabAddCourse.className = 'px-4 py-2 rounded-lg font-bold text-sm bg-slate-900 text-white';
-              tabOverview.className = 'px-4 py-2 rounded-lg font-bold text-sm bg-white text-slate-700 border border-slate-200 hover:bg-slate-50';
-              panelOverview.classList.add('hidden');
-              panelAddCourse.classList.remove('hidden');
-          }
+        function showAddCoursePanel() {
+            tabAddCourse.className = 'btn btn-primary';
+            tabOverview.className = 'btn btn-outline';
+            panelOverview.style.display = 'none';
+            panelAddCourse.style.display = 'block';
+        }
 
-          tabOverview.addEventListener('click', showOverview);
-          tabAddCourse.addEventListener('click', showAddCourse);
+        tabOverview.addEventListener('click', showOverviewPanel);
+        tabAddCourse.addEventListener('click', showAddCoursePanel);
+        if (cancelBtn) cancelBtn.addEventListener('click', showOverviewPanel);
 
-          const form = document.getElementById('add-course-form');
-          const submitBtn = document.getElementById('submit_course');
-          const courseCode = document.getElementById('course_code');
-          const title = document.getElementById('title');
-          const courseType = document.getElementById('course_type');
-          const capacity = document.getElementById('capacity');
-          const department = document.getElementById('department');
+        // Form validation
+        const form = document.getElementById('add-course-form');
+        const submitBtn = document.getElementById('submit_course');
+        const courseCode = document.getElementById('course_code');
+        const title = document.getElementById('title');
+        const courseType = document.getElementById('course_type');
+        const capacity = document.getElementById('capacity');
+        const department = document.getElementById('department');
 
-          function setVisible(id, visible) {
-              const el = document.getElementById(id);
-              if (!el) return;
-              el.classList.toggle('hidden', !visible);
-          }
+        function setVisible(id, visible) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.style.display = visible ? 'block' : 'none';
+        }
 
-          function validate() {
-              const codeOk = courseCode.value.trim().length > 0;
-              const titleOk = title.value.trim().length > 0;
-              const typeOk = (courseType.value === 'Core' || courseType.value === 'Elective');
-              const capVal = parseInt(capacity.value, 10);
-              const capOk = !Number.isNaN(capVal) && capVal > 0;
-              const depOk = department.value.trim().length > 0;
+        function validate() {
+            const codeOk = courseCode.value.trim().length > 0;
+            const titleOk = title.value.trim().length > 0;
+            const typeOk = (courseType.value === 'Core' || courseType.value === 'Elective');
+            const capVal = parseInt(capacity.value, 10);
+            const capOk = !Number.isNaN(capVal) && capVal > 0;
+            const depOk = department.value.trim().length > 0;
 
-              setVisible('course_code_error', !codeOk);
-              setVisible('title_error', !titleOk);
-              setVisible('course_type_error', !typeOk);
-              setVisible('capacity_error', !capOk);
-              setVisible('department_error', !depOk);
+            setVisible('course_code_error', !codeOk);
+            setVisible('title_error', !titleOk);
+            setVisible('course_type_error', !typeOk);
+            setVisible('capacity_error', !capOk);
+            setVisible('department_error', !depOk);
 
-              const ok = codeOk && titleOk && typeOk && capOk && depOk;
-              submitBtn.disabled = !ok;
-              submitBtn.classList.toggle('opacity-50', !ok);
-              submitBtn.classList.toggle('cursor-not-allowed', !ok);
-              return ok;
-          }
+            const ok = codeOk && titleOk && typeOk && capOk && depOk;
+            submitBtn.disabled = !ok;
+            submitBtn.style.opacity = ok ? '1' : '.5';
+            submitBtn.style.cursor = ok ? 'pointer' : 'not-allowed';
+            return ok;
+        }
 
-          [courseCode, title, courseType, capacity, department].forEach(el => {
-              el.addEventListener('input', validate);
-              el.addEventListener('change', validate);
-          });
+        [courseCode, title, courseType, capacity, department].forEach(el => {
+            el.addEventListener('input', validate);
+            el.addEventListener('change', validate);
+        });
 
-          form.addEventListener('submit', function(e) {
-              if (!validate()) {
-                  e.preventDefault();
-              }
-          });
+        form.addEventListener('submit', function(e) {
+            if (!validate()) e.preventDefault();
+        });
 
-          // Initial state
-          validate();
-          showOverview();
-      }
-  });
-
-
+        validate();
+    }
+});
 </script>
 {% endblock %}

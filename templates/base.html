@@ -1,68 +1,308 @@
 <!doctype html>
-<html>
+<html lang="en">
   <head>
-    <title>UniManage</title>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>{% block title %}UniManage{% endblock %} — UniManage</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <style>
+      :root {
+        --navy:    #0f2342;
+        --navy2:   #1a3a6b;
+        --gold:    #d4952a;
+        --gold2:   #f0b840;
+        --surface: #f2f4f8;
+        --card:    #ffffff;
+        --text:    #1a2332;
+        --muted:   #64748b;
+        --border:  #e2e8f0;
+      }
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body { height: 100%; font-family: 'DM Sans', sans-serif; color: var(--text); background: var(--surface); }
+      h1,h2,h3,.serif { font-family: 'Fraunces', Georgia, serif; }
+
+      /* ── Sidebar ── */
+      .sidebar {
+        width: 248px; min-height: 100vh; background: var(--navy);
+        display: flex; flex-direction: column;
+        position: sticky; top: 0; height: 100vh; overflow-y: auto; flex-shrink: 0;
+      }
+      .sidebar-logo { padding: 1.25rem 1.25rem 1rem; border-bottom: 1px solid rgba(255,255,255,.07); }
+      .logo-mark { width:38px;height:38px; background:var(--gold); border-radius:10px;
+        display:flex;align-items:center;justify-content:center;
+        font-family:'Fraunces',serif; color:#fff; font-size:1.1rem; font-weight:700; flex-shrink:0; }
+      .logo-name { font-family:'Fraunces',serif; color:#fff; font-size:1rem; line-height:1.2; }
+      .logo-sub  { font-size:0.6rem; color:#4a7aaa; font-weight:600; text-transform:uppercase; letter-spacing:.08em; }
+
+      .nav-section { font-size:0.62rem; font-weight:700; text-transform:uppercase; letter-spacing:.1em;
+        color:#3a5a7a; padding:.9rem 1.1rem .3rem; }
+      .nav-link {
+        display:flex; align-items:center; gap:.6rem; padding:.5rem 1.1rem;
+        border-radius:.45rem; margin:.1rem .6rem; font-size:.83rem; font-weight:500;
+        color:#7aa0c0; text-decoration:none; transition:all .15s;
+      }
+      .nav-link:hover { background:rgba(255,255,255,.07); color:#fff; }
+      .nav-link.active { background:rgba(212,149,42,.18); color:var(--gold2); }
+      .nav-link .ic { width:15px; height:15px; flex-shrink:0; }
+      .nav-badge { margin-left:auto; background:var(--gold); color:#fff;
+        font-size:.62rem; font-weight:800; padding:.1rem .4rem; border-radius:99px; }
+
+      .sidebar-user { padding:.9rem 1.1rem; border-top:1px solid rgba(255,255,255,.07); margin-top:auto; }
+      .avatar { width:32px; height:32px; border-radius:50%; background:var(--gold); color:#fff;
+        display:flex; align-items:center; justify-content:center; font-weight:700; font-size:.85rem; flex-shrink:0; }
+
+      /* ── Main Layout ── */
+      .layout { display:flex; min-height:100vh; }
+      .main   { flex:1; display:flex; flex-direction:column; min-width:0; }
+      .topbar {
+        background:#fff; border-bottom:1px solid var(--border);
+        padding:.9rem 2rem; display:flex; align-items:center; justify-content:space-between;
+        position:sticky; top:0; z-index:10;
+        box-shadow: 0 1px 3px rgba(0,0,0,.04);
+      }
+      .page-title { font-family:'Fraunces',serif; font-size:1.2rem; color:var(--text); }
+      .breadcrumb { font-size:.75rem; color:var(--muted); margin-top:.15rem; }
+      .content    { flex:1; padding:1.75rem 2rem; }
+      .footer { padding:.75rem 2rem; text-align:center; font-size:.72rem; color:#94a3b8; border-top:1px solid var(--border); }
+
+      /* ── Alerts ── */
+      .flashes { padding:0 2rem; }
+      .alert { border-radius:.55rem; padding:.65rem .9rem; font-size:.83rem; margin-bottom:.6rem;
+        display:flex; align-items:center; gap:.5rem; border-left:4px solid transparent; }
+      .alert-success { background:#dcfce7; color:#166534; border-color:#22c55e; }
+      .alert-danger  { background:#fee2e2; color:#991b1b; border-color:#ef4444; }
+      .alert-warning { background:#fef9c3; color:#854d0e; border-color:#eab308; }
+      .alert-info    { background:#dbeafe; color:#1e40af; border-color:#3b82f6; }
+      .alert-ic { width:15px; height:15px; flex-shrink:0; }
+
+      /* ── Cards ── */
+      .card { background:#fff; border-radius:.85rem; box-shadow:0 1px 3px rgba(0,0,0,.05),0 4px 12px rgba(0,0,0,.04); }
+      .card-p { padding:1.4rem 1.6rem; }
+
+      /* ── Buttons ── */
+      .btn { display:inline-flex; align-items:center; gap:.35rem; border-radius:.5rem;
+        font-size:.82rem; font-weight:600; padding:.48rem 1rem; cursor:pointer;
+        transition:all .15s; border:none; text-decoration:none; white-space:nowrap; }
+      .btn-primary { background:var(--navy); color:#fff; }
+      .btn-primary:hover { background:var(--navy2); }
+      .btn-gold { background:var(--gold); color:#fff; }
+      .btn-gold:hover { background:#b8801e; }
+      .btn-outline { background:transparent; color:var(--muted); border:1.5px solid var(--border); }
+      .btn-outline:hover { border-color:var(--navy); color:var(--navy); background:#f0f4ff; }
+      .btn-danger { background:#fee2e2; color:#991b1b; }
+      .btn-danger:hover { background:#fca5a5; }
+      .btn-sm { padding:.32rem .75rem; font-size:.76rem; }
+      .btn-xs { padding:.22rem .55rem; font-size:.7rem; }
+
+      /* ── Forms ── */
+      .form-group { margin-bottom:1rem; }
+      .form-label { display:block; font-size:.73rem; font-weight:700; color:var(--muted);
+        text-transform:uppercase; letter-spacing:.05em; margin-bottom:.35rem; }
+      .form-control {
+        width:100%; border:1.5px solid var(--border); border-radius:.5rem;
+        padding:.52rem .8rem; font-size:.875rem; font-family:'DM Sans',sans-serif;
+        color:var(--text); background:#fff; transition:border .15s;
+      }
+      .form-control:focus { outline:none; border-color:var(--navy); box-shadow:0 0 0 3px rgba(15,35,66,.08); }
+      textarea.form-control { resize:vertical; }
+
+      /* ── Badges ── */
+      .badge { display:inline-flex; align-items:center; gap:.25rem;
+        padding:.18rem .6rem; border-radius:99px; font-size:.68rem; font-weight:700; }
+      .badge-navy   { background:#dbeafe; color:#1e3a5f; }
+      .badge-green  { background:#dcfce7; color:#166534; }
+      .badge-gold   { background:#fef9c3; color:#854d0e; }
+      .badge-red    { background:#fee2e2; color:#991b1b; }
+      .badge-gray   { background:#f1f5f9; color:#475569; }
+      .badge-purple { background:#f3e8ff; color:#6b21a8; }
+
+      /* ── Table ── */
+      .table-wrap { overflow:hidden; border-radius:.85rem; box-shadow:0 1px 3px rgba(0,0,0,.05),0 4px 12px rgba(0,0,0,.04); }
+      table.ums-table { width:100%; border-collapse:collapse; background:#fff; }
+      .ums-table thead tr { background:var(--navy); }
+      .ums-table thead th { padding:.75rem 1.1rem; text-align:left; font-size:.7rem;
+        font-weight:700; color:#fff; text-transform:uppercase; letter-spacing:.06em; white-space:nowrap; }
+      .ums-table tbody tr { border-bottom:1px solid #f1f5f9; transition:background .1s; }
+      .ums-table tbody tr:hover { background:#f8faff; }
+      .ums-table tbody td { padding:.7rem 1.1rem; font-size:.85rem; }
+      .ums-table tbody tr:last-child { border-bottom:none; }
+
+      /* ── Stat Cards ── */
+      .stat-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:1rem; margin-bottom:1.75rem; }
+      .stat-card { background:#fff; border-radius:.85rem; padding:1.1rem 1.3rem;
+        border:1.5px solid var(--border); display:flex; align-items:center; gap:1rem; }
+      .stat-icon { width:42px;height:42px; border-radius:.7rem; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+      .stat-num { font-family:'Fraunces',serif; font-size:1.7rem; color:var(--text); line-height:1; }
+      .stat-lbl { font-size:.72rem; color:var(--muted); font-weight:600; margin-top:.2rem; }
+
+      /* ── Misc ── */
+      @keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+      .fade-up { animation:fadeUp .3s ease both; }
+      .room-free { background:#f0fdf4; border:1px solid #bbf7d0; border-radius:.6rem; padding:.7rem; text-align:center; }
+      .room-busy { background:#fff5f5; border:1px solid #fecaca; border-radius:.6rem; padding:.6rem .8rem; margin-bottom:.4rem; }
+      .divider { border:none; border-top:1px solid var(--border); margin:1.2rem 0; }
+      .text-muted { color:var(--muted); }
+      .empty-state { text-align:center; padding:3.5rem 1rem; }
+      .empty-state .ic { opacity:.2; display:block; margin:0 auto .75rem; }
+      .section-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:1.25rem; gap:1rem; flex-wrap:wrap; }
+      .page-sub { font-size:.78rem; color:var(--muted); margin-top:.1rem; }
+
+      /* ── Login Page ── */
+      .login-wrap { min-height:100vh; display:flex; align-items:center; justify-content:center;
+        background:var(--navy); background-image:radial-gradient(rgba(255,255,255,.04) 1px, transparent 1px);
+        background-size:22px 22px; padding:1rem; }
+      .login-card { background:#fff; border-radius:1.25rem; padding:2.5rem;
+        box-shadow:0 20px 60px rgba(0,0,0,.35); width:100%; max-width:400px; }
+      .login-logo { text-align:center; margin-bottom:2rem; }
+      .login-mark { width:54px;height:54px; background:var(--navy); border-radius:14px;
+        display:flex;align-items:center;justify-content:center; margin:0 auto .75rem; }
+      .login-title { font-family:'Fraunces',serif; font-size:1.6rem; color:var(--text); }
+      .login-sub { font-size:.72rem; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:.08em; margin-top:.2rem; }
+      .input-icon-wrap { position:relative; }
+      .input-icon { position:absolute; left:.75rem; top:50%; transform:translateY(-50%);
+        width:15px; height:15px; color:#94a3b8; pointer-events:none; }
+      .input-padded { padding-left:2.4rem !important; }
+      .demo-box { background:#f8fafc; border:1px solid var(--border); border-radius:.6rem;
+        padding:.75rem 1rem; font-size:.78rem; color:var(--muted); margin-top:1.25rem; }
+    </style>
   </head>
-  <body class="bg-slate-50 text-slate-800 font-sans flex min-h-screen">
+  <body>
     {% if session.get('user_id') %}
-    <aside class="w-64 bg-slate-900 text-white p-6 flex flex-col">
-      <h2 class="text-xl font-bold mb-8 text-amber-500">UniManage</h2>
-      <a href="{{ url_for('staff.profile') }}" class="mb-4 hover:text-amber-400"
-        >My Dashboard</a
-      >
-      <a
-        href="{{ url_for('staff.directory') }}"
-        class="mb-4 hover:text-amber-400"
-        >Staff Directory</a
-      >
-      <a
-        href="{{ url_for('curriculum.courses_list') }}"
-        class="mb-4 hover:text-amber-400"
-        >Course Catalog</a
-      >
-      <a
-        href="{{ url_for('community.events_feed') }}"
-        class="mb-4 hover:text-amber-400"
-        >Events Feed</a
-      >
-      {% if session.get('role') == 'student' %}
-      <a
-        href="{{ url_for('curriculum.my_curriculum') }}"
-        class="mb-4 hover:text-amber-400"
-        >My Curriculum</a
-      >
-      {% endif %}
-      <a
-        href="{{ url_for('community.students_list') }}"
-        class="mb-4 hover:text-amber-400"
-        >Student Records</a
-      >
-      <a
-        href="{{ url_for('auth.logout') }}"
-        class="mt-auto text-red-400 hover:underline"
-        >Logout</a
-      >
-    </aside>
+    {# ════ AUTHENTICATED LAYOUT ════ #}
+    <div class="layout">
+      <!-- ════ SIDEBAR ════ -->
+      <aside class="sidebar">
+        <div class="sidebar-logo">
+          <div style="display:flex;align-items:center;gap:.75rem;">
+            <div class="logo-mark">U</div>
+            <div>
+              <div class="logo-name">UniManage</div>
+              <div class="logo-sub">University System</div>
+            </div>
+          </div>
+        </div>
+
+        <nav style="flex:1;padding:.75rem .4rem;">
+          <div class="nav-section">Main</div>
+          <a href="{{ url_for('staff.profile') }}" class="nav-link {% if request.endpoint == 'staff.profile' %}active{% endif %}">
+            <i data-lucide="layout-dashboard" class="ic"></i>Dashboard
+          </a>
+
+          <div class="nav-section" style="margin-top:.75rem;">Academic</div>
+          <a href="{{ url_for('curriculum.courses_list') }}" class="nav-link {% if request.endpoint and 'curriculum' in request.endpoint %}active{% endif %}">
+            <i data-lucide="book-open" class="ic"></i>Courses
+          </a>
+
+          <div class="nav-section" style="margin-top:.75rem;">People</div>
+          {% if session.get('role') == 'admin' %}
+          <a href="{{ url_for('community.students_list') }}" class="nav-link {% if request.endpoint and 'students' in request.endpoint %}active{% endif %}">
+            <i data-lucide="users" class="ic"></i>Students
+          </a>
+          {% endif %}
+          <a href="{{ url_for('staff.directory') }}" class="nav-link {% if request.endpoint == 'staff.directory' %}active{% endif %}">
+            <i data-lucide="briefcase" class="ic"></i>Staff
+          </a>
+
+          <div class="nav-section" style="margin-top:.75rem;">Community</div>
+          <a href="{{ url_for('community.events_feed') }}" class="nav-link {% if request.endpoint == 'community.events_feed' %}active{% endif %}">
+            <i data-lucide="calendar-days" class="ic"></i>Events &amp; Deadlines
+          </a>
+          {% if session.get('role') in ['admin', 'head_staff'] %}
+          <a href="{{ url_for('staff.manage_announcements') }}" class="nav-link {% if request.endpoint and 'announcement' in request.endpoint %}active{% endif %}">
+            <i data-lucide="megaphone" class="ic"></i>Announcements
+          </a>
+          {% endif %}
+
+          {% if session.get('role') == 'student' %}
+          <a href="{{ url_for('curriculum.my_curriculum') }}" class="nav-link {% if request.endpoint == 'curriculum.my_curriculum' %}active{% endif %}">
+            <i data-lucide="book-marked" class="ic"></i>My Curriculum
+          </a>
+          {% endif %}
+        </nav>
+
+        <div class="sidebar-user">
+          <div style="display:flex;align-items:center;gap:.65rem;margin-bottom:.6rem;">
+            <div class="avatar">{{ (session.get('username','?'))[0]|upper }}</div>
+            <div style="min-width:0;">
+              <div style="color:#fff;font-size:.8rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ session.get('username','User') }}</div>
+              <div style="color:#4a7aaa;font-size:.66rem;text-transform:capitalize;">{{ session.get('role','user') }}</div>
+            </div>
+          </div>
+          <a href="{{ url_for('auth.logout') }}" class="nav-link" style="color:#f87171;margin:0;">
+            <i data-lucide="log-out" class="ic"></i>Sign Out
+          </a>
+        </div>
+      </aside>
+
+      <!-- ════ MAIN ════ -->
+      <div class="main">
+        <header class="topbar">
+          <div>
+            <div class="page-title">{% block page_title %}UniManage{% endblock %}</div>
+            <div class="breadcrumb">{% block breadcrumb %}{% endblock %}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:1rem;">
+            <span style="font-size:.75rem;color:var(--muted);">{% set today = None %}{{ "now"|string }}</span>
+            <div class="avatar">{{ (session.get('username','?'))[0]|upper }}</div>
+          </div>
+        </header>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="flashes" style="margin-top:.5rem;">
+          {% for category, message in messages %}
+          {% set cat = (category or 'info') | lower %}
+          <div class="alert alert-{{ cat }} fade-up">
+            <i data-lucide="{{ 'check-circle' if cat == 'success' else 'alert-circle' if cat == 'danger' else 'alert-triangle' if cat == 'warning' else 'info' }}" class="alert-ic"></i>
+            {{ message }}
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+
+        <main class="content fade-up">
+          {% block content %}{% endblock %}
+        </main>
+
+        <footer class="footer">
+          UniManage · University Management System · Agile Phase 2 · CSE342 (UG2023)
+        </footer>
+      </div>
+    </div>
+    {% else %}
+    {# ════ UNAUTHENTICATED (LOGIN) ════ #}
+    {% block unauthenticated %}
+      <main>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div style="position:fixed;top:1rem;right:1rem;z-index:100;max-width:400px;">
+          {% for category, message in messages %}
+          {% set cat = (category or 'info') | lower %}
+          <div class="alert alert-{{ cat }} fade-up">
+            <i data-lucide="{{ 'check-circle' if cat == 'success' else 'alert-circle' if cat == 'danger' else 'info' }}" class="alert-ic"></i>
+            {{ message }}
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+        {% block content_unauth %}{% endblock %}
+      </main>
+    {% endblock %}
     {% endif %}
 
-    <main class="flex-1 p-8">
-      {% with messages = get_flashed_messages(with_categories=true) %} {% if
-      messages %}
-      <div class="mb-6 space-y-2 max-w-2xl">
-        {% for category, message in messages %} {% set cat = (category or
-        'info') | lower %} {% if cat in ['success'] %} {% set cls =
-        'bg-green-100 text-green-800 border border-green-200' %} {% elif cat in
-        ['warning'] %} {% set cls = 'bg-amber-100 text-amber-800 border
-        border-amber-200' %} {% elif cat in ['danger', 'error'] %} {% set cls =
-        'bg-red-100 text-red-800 border border-red-200' %} {% else %} {% set cls
-        = 'bg-blue-100 text-blue-800 border border-blue-200' %} {% endif %}
-        <div class="px-4 py-3 rounded-lg font-bold text-sm {{ cls }}">
-          {{ message }}
-        </div>
-        {% endfor %}
-      </div>
-      {% endif %} {% endwith %} {% block content %}{% endblock %}
-    </main>
+    <script>
+      lucide.createIcons();
+      setTimeout(()=>{
+        document.querySelectorAll('.alert').forEach(el=>{
+          el.style.transition='opacity .5s';el.style.opacity='0';
+          setTimeout(()=>el.remove(),500);
+        });
+      },4200);
+    </script>
   </body>
 </html>

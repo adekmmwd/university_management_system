@@ -253,65 +253,7 @@ def login():
     return render_template("auth/login.html")
 
 
-@auth_bp.route("/signup", methods=["GET", "POST"])
-def signup():
-    if request.method == "POST":
-        username = request.form.get("username", "").strip()
-        pwd = request.form.get("password", "")
-        full_name = request.form.get("full_name", "").strip()
-        role = request.form.get("role", "student")
-
-        existing = (
-            supabase.table("users").select("id").eq("username", username).execute()
-        )
-        if existing.data:
-            flash("Username already exists.", "danger")
-        else:
-            hashed = generate_password_hash(pwd)
-
-            # 1. Create the Auth User
-            user_resp = (
-                supabase.table("users")
-                .insert(
-                    {
-                        "username": username,
-                        "password_hash": hashed,
-                        "full_name": full_name,
-                        "role": role,
-                    }
-                )
-                .execute()
-            )
-
-            new_user_id = user_resp.data[0]["id"]
-
-            # 2. Automatically generate the public directory profile
-            if role in ["staff", "admin", "course_coordinator"]:
-                supabase.table("staff").insert(
-                    {
-                        "user_id": new_user_id,
-                        "staff_id": f"STAFF-{new_user_id}",  # Generate a placeholder ID
-                        "name": full_name,
-                        "role_type": "course_coordinator" if role == "course_coordinator" else "professor",
-                        "department": "Pending Assignment",
-                        "email": f"{username}@university.edu",
-                    }
-                ).execute()
-            elif role == "student":
-                supabase.table("students").insert(
-                    {
-                        "user_id": new_user_id,
-                        "student_id": f"STU-{new_user_id}",
-                        "name": full_name,
-                        "email": f"{username}@university.edu",
-                        "department": "Undeclared",
-                    }
-                ).execute()
-
-            flash("Account created! Please log in.", "success")
-            return redirect(url_for("auth.login"))
-
-    return render_template("auth/signup.html")
+# Signup removed — admin registers users via student/staff management pages
 
 
 @auth_bp.route("/logout")

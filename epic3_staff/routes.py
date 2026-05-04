@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, session, jsonify, request, redirect, url_for, flash
 from core.database import supabase
-from core.auth import login_required, course_coordinator_required, admin_or_head_staff_required
+from core.auth import login_required, admin_required, course_coordinator_required, admin_or_head_staff_required
 from epic3_staff.services import (
     get_staff_courses,
     get_staff_by_user_id,
@@ -42,7 +42,7 @@ def profile():
         extra_info = resp.data[0] if resp.data else None
 
     departments = []
-    if role == "course_coordinator":
+    if role in ["course_coordinator", "admin"]:
         departments = get_departments(preferred=(extra_info or {}).get("department"))
 
     available_courses = []
@@ -83,10 +83,14 @@ def profile():
 
 @staff_bp.route("/courses", methods=["POST"])
 @login_required
-@course_coordinator_required
 def create_course():
-    """Create a new course catalog record (CREATE only)."""
+    """Create a new course catalog record (admin or course_coordinator)."""
     uid = session.get("user_id")
+    role = session.get("role")
+
+    if role not in ["admin", "course_coordinator"]:
+        flash("Access denied. Admin or Course Coordinator privileges required.", "danger")
+        return redirect(url_for("staff.profile"))
 
     course_code = request.form.get("course_code", "").strip().upper()
     title = request.form.get("title", "").strip()
@@ -116,12 +120,11 @@ def create_course():
         flash("Capacity must be a positive number.", "danger")
         return redirect(url_for("staff.profile"))
 
+    # For admin, created_by is optional; for coordinator it must be their staff UUID
+    created_by = None
     staff_member = get_staff_by_user_id(uid)
-    if not staff_member or not staff_member.get("uuid"):
-        flash("Staff profile not found for this user.", "danger")
-        return redirect(url_for("staff.profile"))
-
-    created_by = staff_member["uuid"]
+    if staff_member and staff_member.get("uuid"):
+        created_by = staff_member["uuid"]
 
     existing = (
         supabase.table("courses")
@@ -138,25 +141,26 @@ def create_course():
         return redirect(url_for("staff.profile"))
 
     try:
+        insert_data = {
+            "course_code": course_code,
+            "title": title,
+            "description": description,
+            "course_type": course_type,
+            "capacity": capacity,
+            "department": department,
+        }
+        if created_by:
+            insert_data["created_by"] = created_by
+
         resp = (
             supabase.table("courses")
-            .insert(
-                {
-                    "course_code": course_code,
-                    "title": title,
-                    "description": description,
-                    "course_type": course_type,
-                    "capacity": capacity,
-                    "department": department,
-                    "created_by": created_by,
-                }
-            )
+            .insert(insert_data)
             .execute()
         )
 
         if getattr(resp, "data", None):
-            flash("Course created successfully.", "success")
-            return redirect(url_for("staff.profile"))
+            flash(f"Course {course_code} created successfully.", "success")
+            return redirect(url_for("curriculum.courses_list"))
 
         error = getattr(resp, "error", None)
         if error:

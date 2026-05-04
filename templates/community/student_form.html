@@ -1,104 +1,64 @@
 {% extends "base.html" %}
+
+{% block title %}{{ 'Edit Student' if student else 'Add Student' }}{% endblock %}
+{% block page_title %}{{ 'Edit Student' if student else 'Add New Student' }}{% endblock %}
+{% block breadcrumb %}Students · {{ 'Edit' if student else 'New' }}{% endblock %}
+
 {% block content %}
-<h1 class="text-3xl font-bold mb-6">{% if student %}Edit{% else %}Add{% endif %} Student</h1>
+<div style="max-width:520px;">
+  <div class="card card-p">
+    <form method="POST">
+      {% if not student %}
+      <div class="form-group">
+        <label class="form-label">Student ID *</label>
+        <input type="text" name="student_id" required class="form-control" placeholder="e.g. 2300328" maxlength="20">
+        <div style="font-size:.72rem;color:var(--muted);margin-top:.3rem;">Must be a unique 7-digit number.</div>
+      </div>
+      {% endif %}
 
-<div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200 max-w-lg">
-    <form method="POST" class="space-y-4" id="student-form">
-        {% if not student %}
-        <div>
-            <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Student ID *</label>
-            <input id="student_id" type="text" name="student_id" required class="w-full border-2 border-slate-200 rounded-lg px-4 py-2 focus:outline-none focus:border-slate-900">
-            <div id="student_id_error" class="text-red-600 text-sm mt-1"></div>
+      <div class="form-group">
+        <label class="form-label">Full Name *</label>
+        <input type="text" name="name" required class="form-control"
+               value="{{ student.name if student else '' }}" placeholder="Full name">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">University Email *</label>
+        <input type="email" name="email" required class="form-control"
+               value="{{ student.email if student else '' }}" placeholder="student@university.edu">
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+        <div class="form-group">
+          <label class="form-label">Department</label>
+          <select name="department" class="form-control">
+            <option value="">— Select —</option>
+            {% set depts = ['Computer Science','Computer Engineering','Electrical Engineering','Mechanical Engineering','Civil Engineering','Information Systems'] %}
+            {% for d in depts %}
+            <option value="{{ d }}" {{ 'selected' if student and student.department == d else '' }}>{{ d }}</option>
+            {% endfor %}
+          </select>
         </div>
-        {% endif %}
-        <div>
-            <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Full Name *</label>
-            <input id="name" type="text" name="name" value="{{ student.name if student else '' }}" required class="w-full border-2 border-slate-200 rounded-lg px-4 py-2 focus:outline-none focus:border-slate-900">
+        <div class="form-group">
+          <label class="form-label">Year</label>
+          <select name="year" class="form-control">
+            <option value="">— Select —</option>
+            {% for y in range(1, 6) %}
+            <option value="{{ y }}" {{ 'selected' if student and student.year|string == y|string else '' }}>Year {{ y }}</option>
+            {% endfor %}
+          </select>
         </div>
-        <div>
-            <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Email *</label>
-            <input id="email" type="email" name="email" value="{{ student.email if student else '' }}" required class="w-full border-2 border-slate-200 rounded-lg px-4 py-2 focus:outline-none focus:border-slate-900">
-            <div id="email_error" class="text-red-600 text-sm mt-1"></div>
-        </div>
-        <div>
-            <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Department</label>
-            <input type="text" name="department" value="{{ student.department if student else '' }}" class="w-full border-2 border-slate-200 rounded-lg px-4 py-2 focus:outline-none focus:border-slate-900">
-        </div>
-        <div>
-            <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Year</label>
-            <input type="text" name="year" value="{{ student.year if student else '' }}" class="w-full border-2 border-slate-200 rounded-lg px-4 py-2 focus:outline-none focus:border-slate-900">
-        </div>
-        
-        <div class="flex gap-4 pt-4">
-            <button type="submit" class="bg-slate-900 text-white font-bold py-2 px-6 rounded hover:bg-slate-800">Save</button>
-            <a href="{{ url_for('community.students_list') }}" class="py-2 px-6 border-2 border-slate-200 text-slate-600 font-bold rounded hover:bg-slate-50">Cancel</a>
-        </div>
+      </div>
+
+      <hr class="divider">
+      <div style="display:flex;gap:.6rem;">
+        <button class="btn btn-gold">
+          <i data-lucide="{{ 'save' if student else 'user-plus' }}" style="width:14px;height:14px;"></i>
+          {{ 'Save Changes' if student else 'Create Student' }}
+        </button>
+        <a href="{{ url_for('community.students_list') }}" class="btn btn-outline">Cancel</a>
+      </div>
     </form>
+  </div>
 </div>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const form = document.getElementById('student-form');
-    const sidInput = document.getElementById('student_id');
-    const emailInput = document.getElementById('email');
-    const sidError = document.getElementById('student_id_error');
-    const emailError = document.getElementById('email_error');
-    let checkTimer = null;
-
-    function isValidStudentId(v) {
-        return /^\d{7}$/.test((v||'').trim());
-    }
-    function isValidEmail(v) {
-        return /^[^@]+@[^@]+\.[^@]+$/.test((v||'').trim());
-    }
-
-    function checkUnique() {
-        const params = new URLSearchParams();
-        if (sidInput) params.set('student_id', sidInput.value.trim());
-        if (emailInput) params.set('email', emailInput.value.trim());
-        if (!params.toString()) return;
-        fetch(`/api/students/check?${params}`)
-            .then(r => r.json())
-            .then(data => {
-                if (sidInput) {
-                    if (!isValidStudentId(sidInput.value)) {
-                        sidError.textContent = 'Student ID must be 7 digits.';
-                    } else if (data.student_id_exists) {
-                        sidError.textContent = 'Student ID already exists.';
-                    } else {
-                        sidError.textContent = '';
-                    }
-                }
-                if (emailInput) {
-                    if (!isValidEmail(emailInput.value)) {
-                        emailError.textContent = 'Enter a valid email.';
-                    } else if (data.email_exists) {
-                        emailError.textContent = 'Email already exists.';
-                    } else {
-                        emailError.textContent = '';
-                    }
-                }
-            }).catch(() => {});
-    }
-
-    if (sidInput) {
-        sidInput.addEventListener('input', function() {
-            clearTimeout(checkTimer);
-            checkTimer = setTimeout(checkUnique, 300);
-        });
-    }
-    if (emailInput) {
-        emailInput.addEventListener('blur', function() {
-            clearTimeout(checkTimer);
-            checkTimer = setTimeout(checkUnique, 0);
-        });
-    }
-
-    form.addEventListener('submit', function(e) {
-        if ((sidError && sidError.textContent) || (emailError && emailError.textContent)) {
-            e.preventDefault();
-            alert('Please fix validation errors before saving.');
-        }
-    });
-});
-</script>
 {% endblock %}

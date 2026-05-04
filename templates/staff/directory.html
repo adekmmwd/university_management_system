@@ -1,30 +1,80 @@
 {% extends "base.html" %}
-{% block content %}
-<h1 class="text-3xl font-bold mb-6">Academic Staff Directory</h1>
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-    {% for s in staff %}
-    <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200 flex flex-col">
-        <h3 class="font-bold text-lg">{{ s.name }}</h3>
-        <span class="text-xs bg-slate-200 text-slate-700 inline-block px-2 py-1 rounded mt-1 w-fit uppercase font-bold">{{ s.role_type }}</span>
-        <div class="mt-4 text-sm text-slate-600 space-y-1">
-            <p><strong>Dept:</strong> {{ s.department }}</p>
-            <p><strong>Email:</strong> {{ s.email }}</p>
-            <p><strong>Office:</strong> {{ s.office_hours }}</p>
-        </div>
 
-        {% if session.get('role') == 'admin' %}
-        <form method="POST" action="{{ url_for('auth.send_invitation') }}" class="mt-5">
-            <input type="hidden" name="target_type" value="staff" />
-            <input type="hidden" name="target_id" value="{{ s.id }}" />
-            <input type="hidden" name="next" value="{{ request.path }}" />
-            <button type="submit" class="w-full bg-amber-500 text-white px-4 py-2 rounded font-bold hover:bg-amber-600">
-                Send Invitation
-            </button>
-        </form>
-        {% endif %}
-    </div>
-    {% else %}
-    <p class="text-slate-500">No staff members found.</p>
-    {% endfor %}
+{% block title %}Staff Directory{% endblock %}
+{% block page_title %}Staff Directory{% endblock %}
+{% block breadcrumb %}Staff Module · Professors & TAs{% endblock %}
+
+{% block content %}
+<div class="section-header">
+  <p class="page-sub">{{ staff|length }} staff member(s)</p>
 </div>
+
+{% if staff %}
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:1rem;">
+  {% for s in staff %}
+  <div class="card card-p" style="display:flex;flex-direction:column;">
+    <div style="display:flex;gap:.75rem;align-items:flex-start;margin-bottom:.75rem;">
+      {% if s.role_type == 'professor' %}
+      <div
+        style="width:42px;height:42px;background:var(--navy);color:#fff;border-radius:.6rem;display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:700;flex-shrink:0;">
+        {{ s.name[0]|upper if s.name else '?' }}</div>
+      {% else %}
+      <div
+        style="width:42px;height:42px;background:#854d0e;color:#fff;border-radius:.6rem;display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:700;flex-shrink:0;">
+        {{ s.name[0]|upper if s.name else '?' }}</div>
+      {% endif %}
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:600;font-size:.9rem;color:var(--text);">{{ s.name }}</div>
+        <div style="display:flex;gap:.35rem;margin-top:.3rem;flex-wrap:wrap;">
+          {% if s.role_type|lower == 'professor' %}
+          <span class="badge badge-navy">Professor</span>
+          {% elif s.role_type|lower == 'ta' %}
+          <span class="badge badge-gold">Teaching Assistant</span>
+          {% else %}
+          <span class="badge badge-gray" style="text-transform:capitalize;">{{ s.role_type|replace('_', ' ') }}</span>
+          {% endif %}
+          <span class="badge badge-gray">{{ s.staff_id }}</span>
+        </div>
+      </div>
+    </div>
+
+    {% if s.department %}
+    <div style="display:flex;align-items:center;gap:.4rem;font-size:.76rem;color:var(--muted);margin-top:.2rem;">
+      <i data-lucide="building" style="width:11px;height:11px;"></i>{{ s.department }}
+    </div>
+    {% endif %}
+    {% if s.email %}
+    <div style="display:flex;align-items:center;gap:.4rem;font-size:.76rem;color:var(--muted);margin-top:.2rem;">
+      <i data-lucide="mail" style="width:11px;height:11px;"></i>{{ s.email }}
+    </div>
+    {% endif %}
+    {% if s.office_hours %}
+    <div style="display:flex;align-items:center;gap:.4rem;font-size:.76rem;color:var(--muted);margin-top:.2rem;">
+      <i data-lucide="clock" style="width:11px;height:11px;"></i>{{ s.office_hours }}
+    </div>
+    {% endif %}
+
+    {% if session.get('role') == 'admin' %}
+    <div style="display:flex;gap:.4rem;margin-top:.85rem;padding-top:.75rem;border-top:1px solid var(--border);">
+      <form method="POST" action="{{ url_for('auth.send_invitation') }}">
+        <input type="hidden" name="target_type" value="staff">
+        <input type="hidden" name="target_id" value="{{ s.id }}">
+        <input type="hidden" name="next" value="{{ request.path }}">
+        <button type="submit" class="btn btn-gold btn-xs">
+          <i data-lucide="mail" style="width:11px;height:11px;"></i>Send Invitation
+        </button>
+      </form>
+    </div>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card card-p">
+  <div class="empty-state">
+    <i data-lucide="briefcase" style="width:34px;height:34px;" class="ic"></i>
+    <p style="font-size:.85rem;color:var(--muted);">No staff members found.</p>
+  </div>
+</div>
+{% endif %}
 {% endblock %}

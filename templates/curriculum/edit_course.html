@@ -1,97 +1,40 @@
-{% extends "base.html" %} {% block content %}
-<div class="max-w-2xl mx-auto">
-  <div class="flex items-center justify-between mb-6">
-    <h1 class="text-3xl font-bold">Edit Course</h1>
-    <a
-      href="{{ url_for('curriculum.courses_list') }}"
-      class="text-blue-600 hover:text-blue-800 font-medium"
-    >
-      ← Back to Courses
-    </a>
-  </div>
+{% extends "base.html" %}
 
-  <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
-    <form
-      method="POST"
-      action="{{ url_for('curriculum.update_course_route', course_id=course.id) }}"
-    >
-      <div class="space-y-5">
-        <!-- Course Code (read-only) -->
-        <div>
-          <label class="block text-sm font-bold text-slate-700 mb-2"
-            >Course Code</label
-          >
-          <input
-            type="text"
-            value="{{ course.course_code }}"
-            readonly
-            class="w-full px-4 py-2 border border-slate-300 rounded-lg bg-slate-100 text-slate-600 cursor-not-allowed"
-          />
-        </div>
+{% block title %}Edit Course{% endblock %}
+{% block page_title %}Edit Course{% endblock %}
+{% block breadcrumb %}Courses · Edit{% endblock %}
 
-        <!-- Title -->
-        <div>
-          <label for="title" class="block text-sm font-bold text-slate-700 mb-2"
-            >Course Title <span class="text-red-500">*</span></label
-          >
-          <input
-            type="text"
-            id="title"
-            name="title"
-            value="{{ course.course_name }}"
-            required
-            class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="e.g., Database Management"
-          />
-        </div>
+{% block content %}
+<div style="max-width:520px;">
+  <div class="card card-p">
+    <!-- Course Code (read-only) -->
+    <div style="background:#f8faff;border:1px solid #e8edf8;border-radius:.5rem;padding:.65rem .85rem;margin-bottom:1rem;">
+      <div style="font-size:.7rem;color:var(--muted);font-weight:600;">Course Code</div>
+      <div style="font-family:monospace;font-weight:700;font-size:1.1rem;color:var(--navy);">{{ course.course_code }}</div>
+    </div>
 
-        <!-- Description -->
-        <div>
-          <label
-            for="description"
-            class="block text-sm font-bold text-slate-700 mb-2"
-            >Description <span class="text-red-500">*</span></label
-          >
-          <textarea
-            id="description"
-            name="description"
-            rows="4"
-            required
-            class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="Enter course description..."
-          >
-{{ course.description or '' }}</textarea
-          >
-        </div>
-
-        <!-- Capacity -->
-        <div>
-          <label
-            for="capacity"
-            class="block text-sm font-bold text-slate-700 mb-2"
-            >Capacity <span class="text-red-500">*</span></label
-          >
-          <input
-            type="number"
-            id="capacity"
-            name="capacity"
-            value="{{ course.capacity or 30 }}"
-            min="1"
-            required
-            class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="e.g., 30"
-          />
-        </div>
-
-        <!-- Submit Button -->
-        <div class="pt-4">
-          <button
-            type="submit"
-            class="w-full bg-slate-900 text-white font-bold py-3 px-6 rounded-lg hover:bg-slate-800 transition-colors"
-          >
-            Save Changes
-          </button>
-        </div>
+    <form method="POST" action="{{ url_for('curriculum.update_course_route', course_id=course.id) }}">
+      <div class="form-group">
+        <label class="form-label">Title *</label>
+        <input type="text" name="title" required class="form-control"
+               value="{{ course.course_name or course.title }}" placeholder="Course title">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description *</label>
+        <textarea name="description" rows="3" required class="form-control"
+                  placeholder="Brief description…">{{ course.description or '' }}</textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Capacity *</label>
+        <input type="number" name="capacity" min="1" max="500" required class="form-control"
+               value="{{ course.capacity or 30 }}">
+      </div>
+      <hr class="divider">
+      <div style="display:flex;gap:.6rem;">
+        <button type="submit" class="btn btn-gold">
+          <i data-lucide="save" style="width:14px;height:14px;"></i>Save Changes
+        </button>
+        <a href="{{ url_for('curriculum.courses_list') }}" class="btn btn-outline">Cancel</a>
       </div>
     </form>
   </div>

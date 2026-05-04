@@ -1,38 +1,51 @@
 {% extends "base.html" %}
 
-{% block content %}
-<div class="flex items-center justify-center min-h-[80vh]">
-    <div class="bg-white p-8 rounded-xl shadow-lg border border-slate-200 w-full max-w-md">
-        
-        <div class="text-center mb-8">
-            <div class="w-14 h-14 bg-slate-900 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <span class="font-serif text-white text-2xl font-bold">U</span>
-            </div>
-            <h1 class="font-serif text-2xl text-slate-800">UniManage</h1>
-            <p class="text-xs text-slate-500 font-bold uppercase tracking-widest mt-1">University Management System</p>
-        </div>
+{% block title %}Sign In{% endblock %}
 
-        <form method="POST" action="{{ url_for('auth.login') }}" class="space-y-5">
-            <div>
-                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Username</label>
-                <input type="text" name="username" required autofocus
-                       class="w-full border-2 border-slate-200 rounded-lg px-4 py-2 focus:outline-none focus:border-slate-900 transition-colors">
-            </div>
-            
-            <div>
-                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Password</label>
-                <input type="password" name="password" required
-                       class="w-full border-2 border-slate-200 rounded-lg px-4 py-2 focus:outline-none focus:border-slate-900 transition-colors">
-            </div>
-            
-            <button type="submit" class="w-full bg-slate-900 text-white font-bold py-3 rounded-lg hover:bg-slate-800 transition-colors">
-                Sign In
-            </button>
-        </form>
-
-        <p class="text-center text-sm text-slate-500 mt-6">
-            Don't have an account? <a href="{{ url_for('auth.signup') }}" class="text-amber-600 font-bold hover:underline">Sign up</a>
-        </p>
+{% block content_unauth %}
+<style>
+  @keyframes slideUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+  .slide-up{animation:slideUp .45s ease both;}
+</style>
+<div class="login-wrap">
+  <div class="login-card slide-up">
+    <div class="login-logo">
+      <div class="login-mark">
+        <span style="font-family:'Fraunces',serif;color:#fff;font-size:1.5rem;font-weight:700;">U</span>
+      </div>
+      <div class="login-title">UniManage</div>
+      <div class="login-sub">University Management System</div>
     </div>
+
+    <form method="POST" action="{{ url_for('auth.login') }}">
+      <div class="form-group">
+        <label class="form-label">Username</label>
+        <div class="input-icon-wrap">
+          <i data-lucide="user" class="input-icon"></i>
+          <input type="text" name="username" class="form-control input-padded" placeholder="Enter username" required autofocus>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <div class="input-icon-wrap">
+          <i data-lucide="lock" class="input-icon"></i>
+          <input type="password" name="password" class="form-control input-padded" placeholder="Enter password" required>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:.65rem;font-size:.9rem;margin-top:.5rem;">
+        Sign In
+      </button>
+    </form>
+
+    <div class="demo-box">
+      <strong style="color:var(--text);">Default Admin</strong><br>
+      Username: <code style="font-weight:700;color:var(--navy);">admin</code> &nbsp;
+      Password: <code style="font-weight:700;color:var(--navy);">admin123</code>
+    </div>
+
+    <p style="text-align:center;font-size:.72rem;color:#94a3b8;margin-top:1.25rem;">
+      Faculty of Engineering — Ain Shams University · CSE342
+    </p>
+  </div>
 </div>
 {% endblock %}
