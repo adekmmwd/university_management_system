@@ -7,7 +7,6 @@ from epic3_staff.services import (
     get_staff_by_user_id,
     get_departments,
     create_announcement,
-    get_pinned_announcements,
     get_announcements,
     get_announcement_by_id,
     update_announcement,
@@ -22,6 +21,26 @@ from epic2_curriculum.services import (
 )
 
 staff_bp = Blueprint("staff", __name__)
+
+
+@staff_bp.route("/personal_profile")
+@login_required
+def personal_profile():
+    uid = session.get("user_id")
+    role = session.get("role")
+
+    user_resp = supabase.table("users").select("*").eq("id", uid).execute()
+    user = user_resp.data[0] if user_resp.data else None
+
+    extra_info = None
+    if role == "student":
+        resp = supabase.table("students").select("*").eq("user_id", uid).execute()
+        extra_info = resp.data[0] if resp.data else None
+    elif role in ["staff", "professor", "ta", "admin", "course_coordinator"]:
+        resp = supabase.table("staff").select("*").eq("user_id", uid).execute()
+        extra_info = resp.data[0] if resp.data else None
+
+    return render_template("staff/personal_profile.html", user=user, role=role, extra=extra_info)
 
 
 # UMS-14: User Personal Profile & Dashboard
@@ -54,21 +73,21 @@ def profile():
             available_courses = []
 
     # --- Schedule Widget data ------------------------------------------------
+    # Admin dashboard does not show schedule.
     schedule_courses = []
-    if role == "student" and extra_info and extra_info.get("uuid"):
-        try:
-            schedule_courses = get_enrolled_courses_for_student(extra_info["uuid"]) or []
-        except Exception:
-            schedule_courses = []
-    elif role in ["staff", "professor", "ta", "admin", "course_coordinator"] and extra_info:
-        staff_uuid = extra_info.get("uuid")
-        if staff_uuid:
+    if role != "admin":
+        if role == "student" and extra_info and extra_info.get("uuid"):
             try:
-                schedule_courses = get_coordinated_courses_for_staff(staff_uuid) or []
+                schedule_courses = get_enrolled_courses_for_student(extra_info["uuid"]) or []
             except Exception:
                 schedule_courses = []
-
-    pinned_announcements = get_pinned_announcements()
+        elif role in ["staff", "professor", "ta", "course_coordinator"] and extra_info:
+            staff_uuid = extra_info.get("uuid")
+            if staff_uuid:
+                try:
+                    schedule_courses = get_coordinated_courses_for_staff(staff_uuid) or []
+                except Exception:
+                    schedule_courses = []
 
     return render_template(
         "staff/dashboard.html",
@@ -77,7 +96,6 @@ def profile():
         role=role,
         departments=departments,
         available_courses=available_courses,
-        pinned_announcements=pinned_announcements,
         schedule_courses=schedule_courses,
     )
 
@@ -230,7 +248,6 @@ def create_announcement_route():
 
 @staff_bp.route("/admin/announcements")
 @login_required
-@admin_or_head_staff_required
 def manage_announcements():
     status = request.args.get("status", "active")
     if status not in {"active", "archived"}:
@@ -395,7 +412,7 @@ def staff_new():
         email = (request.form.get("email") or "").strip()
         username = (request.form.get("username") or "").strip()
         role_type = (request.form.get("role_type") or "").strip()
-        department = (request.form.get("department") or "").strip()
+        department = (request.form.get("department") or "").strip() or None
         office_hours = (request.form.get("office_hours") or "").strip() or None
 
         errors = []
@@ -424,8 +441,6 @@ def staff_new():
 
         if not role_type:
             errors.append("Role is required.")
-        if not department:
-            errors.append("Department is required.")
 
         if errors:
             for e in errors:
@@ -477,7 +492,7 @@ def staff_edit(sid):
         email = (request.form.get("email") or "").strip()
         username = (request.form.get("username") or "").strip()
         role_type = (request.form.get("role_type") or "").strip()
-        department = (request.form.get("department") or "").strip()
+        department = (request.form.get("department") or "").strip() or None
         office_hours = (request.form.get("office_hours") or "").strip() or None
 
         errors = []
@@ -547,7 +562,13 @@ def staff_delete(sid):
 @admin_required
 def manage_departments():
     departments = _get_all_departments()
-    return render_template("staff/departments.html", departments=departments)
+    professors = []
+    try:
+        professors_data = supabase.table("staff").select("name").eq("role_type", "professor").order("name").execute().data or []
+        professors = [p["name"] for p in professors_data if p.get("name")]
+    except Exception:
+        pass
+    return render_template("staff/departments.html", departments=departments, professors=professors)
 
 
 @staff_bp.route("/admin/departments/create", methods=["POST"])

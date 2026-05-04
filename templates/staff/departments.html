@@ -26,8 +26,12 @@
         </div>
         <div class="form-group">
           <label class="form-label">Head of Department</label>
-          <input type="text" name="head" class="form-control"
-                 placeholder="e.g. Dr. Ahmed Hassan" maxlength="100">
+          <select name="head" class="form-control">
+            <option value="">Select a professor...</option>
+            {% for name in professors %}
+            <option value="{{ name }}">{{ name }}</option>
+            {% endfor %}
+          </select>
         </div>
         <button type="submit" class="btn btn-gold" style="width:100%;justify-content:center;">
           <i data-lucide="building" style="width:14px;height:14px;"></i>Add Department

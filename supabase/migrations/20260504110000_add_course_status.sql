@@ -21,8 +21,7 @@ $$;
 
 -- Add RLS policy for coordinators to update course status
 -- This is in addition to any existing policies
-ALTER TABLE public.courses
-DROP POLICY IF EXISTS courses_update_coordinator;
+DROP POLICY IF EXISTS courses_update_coordinator ON public.courses;
 
 CREATE POLICY courses_update_coordinator
 ON public.courses
@@ -39,8 +38,7 @@ WITH CHECK (
 );
 
 -- Add RLS policy for coordinators to delete courses
-ALTER TABLE public.courses
-DROP POLICY IF EXISTS courses_delete_coordinator;
+DROP POLICY IF EXISTS courses_delete_coordinator ON public.courses;
 
 CREATE POLICY courses_delete_coordinator
 ON public.courses

@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}Personal Profile{% endblock %}
+{% block page_title %}Personal Profile{% endblock %}
+{% block breadcrumb %}Account · Profile Details{% endblock %}
+
+{% block content %}
+<div style="max-width:500px;margin:0 auto;">
+  <div class="card card-p" style="text-align:center;">
+    <div style="width:72px;height:72px;background:var(--navy);color:#fff;border-radius:50%;
+      display:flex;align-items:center;justify-content:center;font-size:2rem;font-weight:700;
+      margin:0 auto .85rem;font-family:'Fraunces',serif;">{{ user.full_name[0]|upper if user.full_name else 'U' }}</div>
+    <div style="font-family:'Fraunces',serif;font-size:1.25rem;">{{ user.full_name or user.username }}</div>
+    <div style="display:inline-block;background:var(--navy);color:#fff;
+      font-size:.72rem;font-weight:700;padding:.25rem .75rem;border-radius:99px;
+      text-transform:capitalize;margin-top:.4rem;">{{ role }}</div>
+    <hr class="divider">
+    <div style="text-align:left;">
+      <div style="display:flex;align-items:flex-start;gap:.75rem;padding:.65rem 0;border-bottom:1px solid var(--border);">
+        <i data-lucide="user" style="width:15px;height:15px;color:var(--muted);margin-top:.1rem;flex-shrink:0;"></i>
+        <div>
+          <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;font-weight:700;color:var(--muted);">Username</div>
+          <div style="font-size:.88rem;margin-top:.1rem;">{{ user.username }}</div>
+        </div>
+      </div>
+
+      {% if extra %}
+        {% if role == 'student' %}
+        <div style="display:flex;align-items:flex-start;gap:.75rem;padding:.65rem 0;border-bottom:1px solid var(--border);">
+          <i data-lucide="hash" style="width:15px;height:15px;color:var(--muted);margin-top:.1rem;flex-shrink:0;"></i>
+          <div>
+            <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;font-weight:700;color:var(--muted);">Student ID</div>
+            <div style="font-size:.88rem;margin-top:.1rem;">{{ extra.student_id }}</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:.75rem;padding:.65rem 0;border-bottom:1px solid var(--border);">
+          <i data-lucide="building" style="width:15px;height:15px;color:var(--muted);margin-top:.1rem;flex-shrink:0;"></i>
+          <div>
+            <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;font-weight:700;color:var(--muted);">Major</div>
+            <div style="font-size:.88rem;margin-top:.1rem;">{{ extra.department }}{% if extra.year %} (Year {{ extra.year }}){% endif %}</div>
+          </div>
+        </div>
+        {% else %}
+        <div style="display:flex;align-items:flex-start;gap:.75rem;padding:.65rem 0;border-bottom:1px solid var(--border);">
+          <i data-lucide="hash" style="width:15px;height:15px;color:var(--muted);margin-top:.1rem;flex-shrink:0;"></i>
+          <div>
+            <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;font-weight:700;color:var(--muted);">Staff ID</div>
+            <div style="font-size:.88rem;margin-top:.1rem;">{{ extra.staff_id }}</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:.75rem;padding:.65rem 0;border-bottom:1px solid var(--border);">
+          <i data-lucide="building" style="width:15px;height:15px;color:var(--muted);margin-top:.1rem;flex-shrink:0;"></i>
+          <div>
+            <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;font-weight:700;color:var(--muted);">Department</div>
+            <div style="font-size:.88rem;margin-top:.1rem;">{{ extra.department or 'Not set' }}</div>
+          </div>
+        </div>
+        {% if extra.office_hours %}
+        <div style="display:flex;align-items:flex-start;gap:.75rem;padding:.65rem 0;border-bottom:1px solid var(--border);">
+          <i data-lucide="clock" style="width:15px;height:15px;color:var(--muted);margin-top:.1rem;flex-shrink:0;"></i>
+          <div>
+            <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;font-weight:700;color:var(--muted);">Office Hours</div>
+            <div style="font-size:.88rem;margin-top:.1rem;">{{ extra.office_hours }}</div>
+          </div>
+        </div>
+        {% endif %}
+        {% endif %}
+      {% else %}
+      <p style="font-size:.82rem;color:#94a3b8;padding:.75rem 0;font-style:italic;">No extended profile data configured yet.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

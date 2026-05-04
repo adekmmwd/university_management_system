@@ -12,9 +12,11 @@
     <a href="{{ url_for('staff.manage_announcements', status='archived') }}"
        class="btn {{ 'btn-primary' if status == 'archived' else 'btn-outline' }} btn-sm">Archived</a>
   </div>
+  {% if session.get('role') in ['admin', 'head_staff'] %}
   <a href="{{ url_for('staff.new_announcement') }}" class="btn btn-gold">
     <i data-lucide="plus" style="width:14px;height:14px;"></i>Post Announcement
   </a>
+  {% endif %}
 </div>
 
 {% if announcements %}
@@ -38,6 +40,7 @@
           {% endif %}
         </div>
       </div>
+      {% if session.get('role') in ['admin', 'head_staff'] %}
       <div style="display:flex;gap:.4rem;flex-shrink:0;flex-wrap:wrap;">
         <a href="{{ url_for('staff.edit_announcement', announcement_id=announcement.id) }}" class="btn btn-outline btn-xs">
           <i data-lucide="pencil" style="width:11px;height:11px;"></i>Edit
@@ -54,6 +57,7 @@
           </button>
         </form>
       </div>
+      {% endif %}
     </div>
   </div>
   {% endfor %}

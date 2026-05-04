@@ -29,26 +29,22 @@ FOR SELECT
 USING (
     auth.uid()::TEXT = (SELECT uuid::TEXT FROM public.staff WHERE id = (SELECT id FROM public.staff WHERE uuid = ta_id LIMIT 1))
     OR
-    (SELECT role FROM public.staff WHERE uuid = ta_id) = 'ta'
+    (SELECT role_type FROM public.staff WHERE uuid = ta_id) = 'ta'
 );
 
 -- RLS Policy: TAs can update responsibility for their own sections
 CREATE POLICY sections_update_ta_responsibility
 ON public.sections
 FOR UPDATE
-WITH CHECK (
-    (SELECT staff.uuid FROM public.staff WHERE staff.uuid = sections.ta_id AND staff.id = (
-        SELECT staff_id FROM (
-            SELECT id as staff_id FROM public.staff WHERE role = 'ta'
-        ) AS ta_check
-    ))::TEXT = auth.uid()::TEXT
-)
 USING (
-    (SELECT staff.uuid FROM public.staff WHERE staff.uuid = sections.ta_id AND staff.id = (
-        SELECT staff_id FROM (
-            SELECT id as staff_id FROM public.staff WHERE role = 'ta'
-        ) AS ta_check
-    ))::TEXT = auth.uid()::TEXT
+    sections.ta_id::TEXT = auth.uid()::TEXT
+    AND
+    (SELECT role_type FROM public.staff WHERE uuid = sections.ta_id LIMIT 1) = 'ta'
+)
+WITH CHECK (
+    sections.ta_id::TEXT = auth.uid()::TEXT
+    AND
+    (SELECT role_type FROM public.staff WHERE uuid = sections.ta_id LIMIT 1) = 'ta'
 );
 
 -- Function to get TA's assigned sections

@@ -215,11 +215,9 @@
           <a href="{{ url_for('community.events_feed') }}" class="nav-link {% if request.endpoint == 'community.events_feed' %}active{% endif %}">
             <i data-lucide="calendar-days" class="ic"></i>Events &amp; Deadlines
           </a>
-          {% if session.get('role') in ['admin', 'head_staff'] %}
           <a href="{{ url_for('staff.manage_announcements') }}" class="nav-link {% if request.endpoint and 'announcement' in request.endpoint %}active{% endif %}">
             <i data-lucide="megaphone" class="ic"></i>Announcements
           </a>
-          {% endif %}
 
           {% if session.get('role') == 'student' %}
           <a href="{{ url_for('curriculum.my_curriculum') }}" class="nav-link {% if request.endpoint == 'curriculum.my_curriculum' %}active{% endif %}">
@@ -230,7 +228,9 @@
 
         <div class="sidebar-user">
           <div style="display:flex;align-items:center;gap:.65rem;margin-bottom:.6rem;">
-            <div class="avatar">{{ (session.get('username','?'))[0]|upper }}</div>
+              <a href="{{ url_for('staff.personal_profile') }}" style="text-decoration:none;">
+                <div class="avatar" style="cursor:pointer;">{{ (session.get('username','?'))[0]|upper }}</div>
+              </a>
             <div style="min-width:0;">
               <div style="color:#fff;font-size:.8rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ session.get('username','User') }}</div>
               <div style="color:#4a7aaa;font-size:.66rem;text-transform:capitalize;">{{ session.get('role','user') }}</div>
@@ -251,7 +251,9 @@
           </div>
           <div style="display:flex;align-items:center;gap:1rem;">
             <span style="font-size:.75rem;color:var(--muted);">{% set today = None %}{{ "now"|string }}</span>
-            <div class="avatar">{{ (session.get('username','?'))[0]|upper }}</div>
+            <a href="{{ url_for('staff.personal_profile') }}" style="text-decoration: none;">
+              <div class="avatar" style="cursor: pointer;">{{ (session.get('username','?'))[0]|upper }}</div>
+            </a>
           </div>
         </header>
 
