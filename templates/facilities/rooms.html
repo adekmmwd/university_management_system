@@ -9,11 +9,19 @@
   <div>
     <p class="page-sub">Manage campus rooms and availability settings.</p>
   </div>
-  {% if can_add_room %}
-  <button type="button" id="open-add-room-modal" class="btn btn-gold">
-    <i data-lucide="plus" style="width:14px;height:14px;"></i>Add New Room
-  </button>
-  {% endif %}
+  <div style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;">
+    <a href="{{ url_for('facilities.book_room') }}" class="btn btn-gold">
+      <i data-lucide="calendar-plus" style="width:14px;height:14px;"></i>Book Room
+    </a>
+    <a href="{{ url_for('facilities.bookings_list') }}" class="btn btn-outline">
+      <i data-lucide="calendar-check" style="width:14px;height:14px;"></i>My Bookings
+    </a>
+    {% if can_add_room %}
+    <button type="button" id="open-add-room-modal" class="btn btn-gold">
+      <i data-lucide="plus" style="width:14px;height:14px;"></i>Add New Room
+    </button>
+    {% endif %}
+  </div>
 </div>
 
 <div class="table-wrap">

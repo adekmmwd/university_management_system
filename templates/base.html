@@ -195,8 +195,14 @@
           <a href="{{ url_for('curriculum.courses_list') }}" class="nav-link {% if request.endpoint and 'curriculum' in request.endpoint %}active{% endif %}">
             <i data-lucide="book-open" class="ic"></i>Courses
           </a>
-          <a href="{{ url_for('facilities.rooms_list') }}" class="nav-link {% if request.endpoint and request.endpoint.startswith('facilities.') %}active{% endif %}">
+          <a href="{{ url_for('facilities.rooms_list') }}" class="nav-link {% if request.endpoint == 'facilities.rooms_list' %}active{% endif %}">
             <i data-lucide="door-open" class="ic"></i>Rooms
+          </a>
+          <a href="{{ url_for('facilities.book_room') }}" class="nav-link {% if request.endpoint == 'facilities.book_room' %}active{% endif %}">
+            <i data-lucide="calendar-plus" class="ic"></i>Book Room
+          </a>
+          <a href="{{ url_for('facilities.bookings_list') }}" class="nav-link {% if request.endpoint == 'facilities.bookings_list' %}active{% endif %}">
+            <i data-lucide="calendar-check" class="ic"></i>My Bookings
           </a>
 
           <div class="nav-section" style="margin-top:.75rem;">People</div>

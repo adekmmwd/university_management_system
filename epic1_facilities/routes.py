@@ -1,19 +1,28 @@
 from __future__ import annotations
 
 import re
+from datetime import datetime
 from typing import Any
 
-from flask import Blueprint, jsonify, render_template, request, session
+from flask import Blueprint, flash, jsonify, redirect, render_template, request, session, url_for
 
 from core.auth import login_required
 from epic1_facilities.services import (
     ROOM_STATUS_OPTIONS,
     ROOM_TYPE_OPTIONS,
+    booking_conflicts,
+    create_booking,
+    delete_booking,
+    get_all_bookings,
+    get_booking_by_id,
+    get_bookings_for_staff,
     get_building_options,
+    get_room_by_id,
     get_rooms,
     insert_room,
     room_exists,
 )
+from epic3_staff.services import get_staff_by_user_id
 
 try:
     from postgrest.exceptions import APIError as PostgrestAPIError
@@ -203,3 +212,132 @@ def api_add_room():
         ),
         201,
     )
+
+
+@facilities_bp.route("/rooms/book", methods=["GET", "POST"])
+@login_required
+def book_room():
+    staff = get_staff_by_user_id(session.get("user_id"))
+    if not staff:
+        flash("Only staff members can book rooms.", "danger")
+        return redirect(url_for("facilities.rooms_list"))
+
+    rooms = get_rooms()
+    if request.method == "POST":
+        room_id = (request.form.get("room_id") or "").strip()
+        title = (request.form.get("title") or "").strip()
+        date_value = (request.form.get("date") or "").strip()
+        start_time = (request.form.get("start_time") or "").strip()
+        end_time = (request.form.get("end_time") or "").strip()
+
+        if not room_id or not title or not date_value or not start_time or not end_time:
+            flash("All booking fields are required.", "danger")
+            return render_template(
+                "facilities/book_room.html",
+                rooms=rooms,
+                staff=staff,
+                form_data=request.form,
+            )
+
+        if not get_room_by_id(room_id):
+            flash("Selected room is not valid.", "danger")
+            return render_template(
+                "facilities/book_room.html",
+                rooms=rooms,
+                staff=staff,
+                form_data=request.form,
+            )
+
+        try:
+            start_dt = datetime.strptime(start_time, "%H:%M")
+            end_dt = datetime.strptime(end_time, "%H:%M")
+            if end_dt <= start_dt:
+                raise ValueError("end before start")
+        except ValueError:
+            flash("Please provide a valid start time and end time.", "danger")
+            return render_template(
+                "facilities/book_room.html",
+                rooms=rooms,
+                staff=staff,
+                form_data=request.form,
+            )
+
+        if booking_conflicts(room_id, date_value, start_time, end_time):
+            flash("This room is already booked for the selected time slot.", "danger")
+            return render_template(
+                "facilities/book_room.html",
+                rooms=rooms,
+                staff=staff,
+                form_data=request.form,
+            )
+
+        booking = create_booking(
+            {
+                "room_id": room_id,
+                "staff_id": staff["id"],
+                "title": title,
+                "date": date_value,
+                "start_time": start_time,
+                "end_time": end_time,
+                "created_at": datetime.utcnow().isoformat(),
+                "updated_at": datetime.utcnow().isoformat(),
+            }
+        )
+
+        if not booking:
+            flash("Unable to create booking. Please try again.", "danger")
+            return render_template(
+                "facilities/book_room.html",
+                rooms=rooms,
+                staff=staff,
+                form_data=request.form,
+            )
+
+        flash("Room booked successfully.", "success")
+        return redirect(url_for("facilities.bookings_list"))
+
+    return render_template("facilities/book_room.html", rooms=rooms, staff=staff)
+
+
+@facilities_bp.route("/bookings", methods=["GET"])
+@login_required
+def bookings_list():
+    if session.get("role") == "admin":
+        bookings = get_all_bookings()
+        current_staff_id = None
+    else:
+        staff = get_staff_by_user_id(session.get("user_id"))
+        if not staff:
+            flash("Only staff members can view bookings.", "danger")
+            return redirect(url_for("facilities.rooms_list"))
+        bookings = get_bookings_for_staff(staff["id"])
+        current_staff_id = staff["id"]
+
+    return render_template(
+        "facilities/bookings.html",
+        bookings=bookings,
+        current_staff_id=current_staff_id,
+        is_admin=session.get("role") == "admin",
+    )
+
+
+@facilities_bp.route("/bookings/<int:booking_id>/cancel", methods=["POST"])
+@login_required
+def booking_cancel(booking_id: int):
+    staff = get_staff_by_user_id(session.get("user_id"))
+    if not staff and session.get("role") != "admin":
+        flash("Only staff members can cancel bookings.", "danger")
+        return redirect(url_for("facilities.bookings_list"))
+
+    booking = get_booking_by_id(booking_id)
+    if not booking:
+        flash("Booking not found.", "danger")
+        return redirect(url_for("facilities.bookings_list"))
+
+    if session.get("role") != "admin" and booking["staff_id"] != staff["id"]:
+        flash("Access denied.", "danger")
+        return redirect(url_for("facilities.bookings_list"))
+
+    delete_booking(booking_id)
+    flash("Booking cancelled.", "success")
+    return redirect(url_for("facilities.bookings_list"))

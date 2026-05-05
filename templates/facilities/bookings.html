@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}Room Bookings{% endblock %}
+{% block page_title %}Room Bookings{% endblock %}
+{% block breadcrumb %}Facilities Module · Booking Management{% endblock %}
+
+{% block content %}
+<div class="section-header">
+  <div>
+    <p class="page-sub">Review room reservations and cancel bookings when needed.</p>
+  </div>
+  <div style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;">
+    <a href="{{ url_for('facilities.book_room') }}" class="btn btn-gold">
+      <i data-lucide="plus" style="width:14px;height:14px;"></i>New Booking
+    </a>
+    <a href="{{ url_for('facilities.rooms_list') }}" class="btn btn-outline">
+      <i data-lucide="door-open" style="width:14px;height:14px;"></i>Room List
+    </a>
+  </div>
+</div>
+
+<div class="table-wrap">
+  <table class="ums-table">
+    <thead>
+      <tr>
+        <th>Title</th>
+        <th>Room</th>
+        <th>Building</th>
+        <th>Date</th>
+        <th>Time</th>
+        <th>Staff</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for booking in bookings %}
+      <tr>
+        <td>{{ booking.title }}</td>
+        <td>{{ booking.room_number }}</td>
+        <td>{{ booking.building_name }}</td>
+        <td>{{ booking.date }}</td>
+        <td>{{ booking.start_time }} — {{ booking.end_time }}</td>
+        <td>{{ booking.staff_name or booking.staff_code }}</td>
+        <td>
+          {% if is_admin or booking.staff_id == current_staff_id %}
+          <form method="POST" action="{{ url_for('facilities.booking_cancel', booking_id=booking.id) }}" style="display:inline;">
+            <button type="submit" class="btn btn-outline btn-xs" onclick="return confirm('Cancel this booking?');">
+              Cancel
+            </button>
+          </form>
+          {% else %}
+          <span style="color:var(--muted);font-size:.85rem;">—</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="7" class="empty-state">
+          <i data-lucide="calendar" style="width:34px;height:34px;" class="ic"></i>
+          <p style="font-size:.85rem;color:var(--muted);">No bookings found.</p>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<p style="font-size:.73rem;color:var(--muted);margin-top:.6rem;">{{ bookings|length }} booking(s)</p>
+{% endblock %}
