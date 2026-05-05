@@ -1,0 +1,321 @@
+{% extends "base.html" %}
+
+{% block title %}Rooms{% endblock %}
+{% block page_title %}Room List{% endblock %}
+{% block breadcrumb %}Facilities Module · Room Management{% endblock %}
+
+{% block content %}
+<div class="section-header">
+  <div>
+    <p class="page-sub">Manage campus rooms and availability settings.</p>
+  </div>
+  {% if can_add_room %}
+  <button type="button" id="open-add-room-modal" class="btn btn-gold">
+    <i data-lucide="plus" style="width:14px;height:14px;"></i>Add New Room
+  </button>
+  {% endif %}
+</div>
+
+<div class="table-wrap">
+  <table class="ums-table">
+    <thead>
+      <tr>
+        <th>Room #</th>
+        <th>Building</th>
+        <th>Floor</th>
+        <th>Capacity</th>
+        <th>Type</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody id="rooms-table-body">
+      {% for room in rooms %}
+      <tr data-room-row="true">
+        <td><span class="badge badge-navy">{{ room.room_number }}</span></td>
+        <td>{{ room.building_name }}</td>
+        <td>{{ room.floor }}</td>
+        <td>{{ room.capacity }}</td>
+        <td><span class="badge badge-gray">{{ room.room_type }}</span></td>
+        <td>
+          {% if room.status == 'Available' %}
+          <span class="badge badge-green">Available</span>
+          {% elif room.status == 'Maintenance' %}
+          <span class="badge badge-gold">Maintenance</span>
+          {% else %}
+          <span class="badge badge-red">Occupied</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr id="rooms-empty-row">
+        <td colspan="6" class="empty-state">
+          <i data-lucide="door-open" style="width:34px;height:34px;" class="ic"></i>
+          <p style="font-size:.85rem;color:var(--muted);">No rooms found.</p>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<p id="rooms-count" style="font-size:.73rem;color:var(--muted);margin-top:.6rem;">{{ rooms|length }} room(s)</p>
+
+{% if can_add_room %}
+<div id="add-room-modal" style="display:none;position:fixed;inset:0;background:rgba(15,35,66,.45);z-index:70;align-items:center;justify-content:center;padding:1rem;">
+  <div class="card card-p" style="width:100%;max-width:560px;max-height:90vh;overflow:auto;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+      <h3 class="serif" style="font-size:1rem;">Add New Room</h3>
+      <button type="button" id="close-add-room-modal" class="btn btn-outline btn-xs">
+        <i data-lucide="x" style="width:12px;height:12px;"></i>Close
+      </button>
+    </div>
+
+    <form id="add-room-form" novalidate>
+      <div id="room-form-error" style="display:none;background:#fee2e2;color:#991b1b;border-radius:.5rem;padding:.55rem .7rem;font-size:.8rem;margin-bottom:.75rem;"></div>
+
+      <div class="form-group">
+        <label class="form-label">Room Number *</label>
+        <input type="text" id="room_number" name="room_number" class="form-control" placeholder="e.g. 101 or Lab A" maxlength="50" required>
+        <p id="room_number_error" style="display:none;font-size:.75rem;color:#991b1b;margin-top:.3rem;"></p>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Building Name *</label>
+        <select id="building_name" name="building_name" class="form-control" required>
+          <option value="">Select building...</option>
+          {% for building in building_options %}
+          <option value="{{ building }}">{{ building }}</option>
+          {% endfor %}
+        </select>
+        <p id="building_name_error" style="display:none;font-size:.75rem;color:#991b1b;margin-top:.3rem;"></p>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+        <div class="form-group">
+          <label class="form-label">Floor *</label>
+          <input type="number" id="floor" name="floor" class="form-control" min="-2" max="20" step="1" required>
+          <p id="floor_error" style="display:none;font-size:.75rem;color:#991b1b;margin-top:.3rem;"></p>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Capacity *</label>
+          <input type="number" id="capacity" name="capacity" class="form-control" min="1" step="1" required>
+          <p id="capacity_error" style="display:none;font-size:.75rem;color:#991b1b;margin-top:.3rem;"></p>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Room Type *</label>
+        <select id="room_type" name="room_type" class="form-control" required>
+          <option value="">Select room type...</option>
+          {% for room_type in room_type_options %}
+          <option value="{{ room_type }}">{{ room_type }}</option>
+          {% endfor %}
+        </select>
+        <p id="room_type_error" style="display:none;font-size:.75rem;color:#991b1b;margin-top:.3rem;"></p>
+      </div>
+
+      <hr class="divider">
+      <div style="display:flex;gap:.6rem;">
+        <button type="submit" id="submit-room-btn" class="btn btn-gold">
+          <i data-lucide="save" style="width:14px;height:14px;"></i>Save Room
+        </button>
+        <button type="button" id="cancel-add-room" class="btn btn-outline">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="room-toast" style="display:none;position:fixed;top:1rem;right:1rem;z-index:80;background:#dcfce7;color:#166534;border-left:4px solid #22c55e;padding:.65rem .9rem;border-radius:.55rem;font-size:.82rem;box-shadow:0 6px 20px rgba(0,0,0,.12);"></div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const modal = document.getElementById("add-room-modal");
+  const openBtn = document.getElementById("open-add-room-modal");
+  const closeBtn = document.getElementById("close-add-room-modal");
+  const cancelBtn = document.getElementById("cancel-add-room");
+  const form = document.getElementById("add-room-form");
+  const submitBtn = document.getElementById("submit-room-btn");
+  const tableBody = document.getElementById("rooms-table-body");
+  const countEl = document.getElementById("rooms-count");
+  const formError = document.getElementById("room-form-error");
+  const toast = document.getElementById("room-toast");
+
+  const roomTypeOptions = {{ room_type_options|tojson }};
+
+  function setError(field, message) {
+    const errorEl = document.getElementById(field + "_error");
+    if (!errorEl) return;
+    errorEl.textContent = message || "";
+    errorEl.style.display = message ? "block" : "none";
+  }
+
+  function clearErrors() {
+    ["room_number", "building_name", "floor", "capacity", "room_type"].forEach((field) => setError(field, ""));
+    formError.style.display = "none";
+    formError.textContent = "";
+  }
+
+  function showFormError(message) {
+    formError.textContent = message;
+    formError.style.display = "block";
+  }
+
+  function openModal() {
+    clearErrors();
+    modal.style.display = "flex";
+  }
+
+  function closeModal() {
+    modal.style.display = "none";
+  }
+
+  function showToastMessage(message) {
+    toast.textContent = message;
+    toast.style.display = "block";
+    setTimeout(() => {
+      toast.style.display = "none";
+    }, 2600);
+  }
+
+  function escapeHtml(value) {
+    return String(value)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  function updateRoomCount() {
+    const count = tableBody.querySelectorAll('tr[data-room-row="true"]').length;
+    countEl.textContent = count + " room(s)";
+  }
+
+  function appendRoomRow(room) {
+    const emptyRow = document.getElementById("rooms-empty-row");
+    if (emptyRow) emptyRow.remove();
+
+    let statusBadge = '<span class="badge badge-red">Occupied</span>';
+    if (room.status === "Available") {
+      statusBadge = '<span class="badge badge-green">Available</span>';
+    } else if (room.status === "Maintenance") {
+      statusBadge = '<span class="badge badge-gold">Maintenance</span>';
+    }
+
+    const row = document.createElement("tr");
+    row.setAttribute("data-room-row", "true");
+    row.innerHTML = `
+      <td><span class="badge badge-navy">${escapeHtml(room.room_number)}</span></td>
+      <td>${escapeHtml(room.building_name)}</td>
+      <td>${escapeHtml(room.floor)}</td>
+      <td>${escapeHtml(room.capacity)}</td>
+      <td><span class="badge badge-gray">${escapeHtml(room.room_type)}</span></td>
+      <td>${statusBadge}</td>
+    `;
+    tableBody.prepend(row);
+    updateRoomCount();
+  }
+
+  function validateForm() {
+    clearErrors();
+
+    const roomNumber = document.getElementById("room_number").value.trim();
+    const buildingName = document.getElementById("building_name").value.trim();
+    const roomType = document.getElementById("room_type").value.trim();
+    const floorRaw = document.getElementById("floor").value;
+    const capacityRaw = document.getElementById("capacity").value;
+
+    let ok = true;
+    if (!roomNumber) {
+      setError("room_number", "Room number is required.");
+      ok = false;
+    }
+    if (!buildingName) {
+      setError("building_name", "Building name is required.");
+      ok = false;
+    }
+    if (!roomType) {
+      setError("room_type", "Room type is required.");
+      ok = false;
+    } else if (!roomTypeOptions.includes(roomType)) {
+      setError("room_type", "Please choose a valid room type.");
+      ok = false;
+    }
+
+    const floor = Number(floorRaw);
+    if (!Number.isInteger(floor)) {
+      setError("floor", "Floor must be an integer.");
+      ok = false;
+    } else if (floor < -2 || floor > 20) {
+      setError("floor", "Floor must be between -2 and 20.");
+      ok = false;
+    }
+
+    const capacity = Number(capacityRaw);
+    if (!Number.isInteger(capacity)) {
+      setError("capacity", "Capacity must be an integer.");
+      ok = false;
+    } else if (capacity <= 0) {
+      setError("capacity", "Capacity must be a positive integer.");
+      ok = false;
+    }
+
+    return ok;
+  }
+
+  openBtn.addEventListener("click", openModal);
+  closeBtn.addEventListener("click", closeModal);
+  cancelBtn.addEventListener("click", closeModal);
+  modal.addEventListener("click", (event) => {
+    if (event.target === modal) closeModal();
+  });
+
+  form.addEventListener("submit", async function (event) {
+    event.preventDefault();
+    if (!validateForm()) return;
+
+    submitBtn.disabled = true;
+    submitBtn.style.opacity = ".6";
+
+    const payload = {
+      room_number: document.getElementById("room_number").value.trim(),
+      building_name: document.getElementById("building_name").value.trim(),
+      floor: Number(document.getElementById("floor").value),
+      capacity: Number(document.getElementById("capacity").value),
+      room_type: document.getElementById("room_type").value.trim()
+    };
+
+    try {
+      const response = await fetch("{{ url_for('facilities.api_add_room') }}", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        if (result.code === "DUPLICATE_ROOM") {
+          setError("room_number", "This room number already exists in the selected building.");
+          setError("building_name", "Choose another room number or building.");
+        } else if (result.errors && typeof result.errors === "object") {
+          Object.entries(result.errors).forEach(([field, message]) => setError(field, message));
+        } else {
+          showFormError(result.error || "Failed to add room.");
+        }
+        return;
+      }
+
+      appendRoomRow(result.room);
+      form.reset();
+      closeModal();
+      showToastMessage(result.message || "Room added successfully.");
+    } catch (error) {
+      showFormError("Network error. Please try again.");
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.style.opacity = "1";
+    }
+  });
+});
+</script>
+{% endif %}
+{% endblock %}

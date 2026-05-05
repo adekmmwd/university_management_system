@@ -195,6 +195,9 @@
           <a href="{{ url_for('curriculum.courses_list') }}" class="nav-link {% if request.endpoint and 'curriculum' in request.endpoint %}active{% endif %}">
             <i data-lucide="book-open" class="ic"></i>Courses
           </a>
+          <a href="{{ url_for('facilities.rooms_list') }}" class="nav-link {% if request.endpoint and request.endpoint.startswith('facilities.') %}active{% endif %}">
+            <i data-lucide="door-open" class="ic"></i>Rooms
+          </a>
 
           <div class="nav-section" style="margin-top:.75rem;">People</div>
           {% if session.get('role') == 'admin' %}

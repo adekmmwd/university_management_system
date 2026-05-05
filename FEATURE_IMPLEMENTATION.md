@@ -2,10 +2,11 @@
 
 ## Overview
 
-Two new features have been implemented for the University Management System:
+Three features have been implemented for the University Management System:
 
 1. **TA Responsibility Update** - Teaching Assistants can update their responsibilities for assigned sections
 2. **Course Deactivation / Deletion** - Course Coordinators can deactivate or delete courses safely
+3. **Room Management (Add Room)** - Admins can add rooms from the Facilities Room List with validation and duplicate prevention
 
 ---
 
